@@ -1,0 +1,8 @@
+export { pessoasRoutes } from './routes'
+export { useAlunoStore } from './store/useAlunoStore'
+export { useAlunos } from './pages/Alunos/hooks/useAlunos'
+export { useProfessores } from './pages/Professores/hooks/useProfessores'
+export type { Aluno } from './pages/Alunos/types'
+export * as alunosApi from './api/alunos'
+export * as professoresApi from './api/professores'
+export * as responsaveisApi from './api/responsaveis'
