@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Building2, Loader2, Save, MapPin } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
@@ -13,8 +13,9 @@ import {
 } from '@/shared/components/ui/select';
 import { useConfiguracaoEmpresa } from '../hooks/useConfiguracaoEmpresa';
 import type { ConfiguracaoEmpresaFormData } from '@/modules/core';
-import { listCidades, listEstados, type Cidade, type Estado } from '@/modules/core/api/localidades';
-import { formatCnpj, unmaskCnpj } from '@/shared/lib/utils';
+import { listCidades, listEstados, type Cidade, type EnderecoCep, type Estado } from '@/modules/core/api/localidades';
+import { useBuscaCep } from '@/modules/core/hooks/useBuscaCep';
+import { formatCep, formatCnpj, unmaskCnpj } from '@/shared/lib/utils';
 
 export const ConfiguracaoEmpresaForm: React.FC = () => {
     const { config, isLoading, isSaving, salvarConfig } = useConfiguracaoEmpresa();
@@ -27,6 +28,8 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
         register,
         handleSubmit,
         setValue,
+        getValues,
+        setFocus,
         watch,
         reset,
         formState: { errors },
@@ -46,6 +49,21 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
     });
 
     const estadoSelecionado = watch('id_estado');
+
+    const preencherEndereco = useCallback((endereco: EnderecoCep) => {
+        const opcoes = { shouldDirty: true };
+
+        setValue('cep', endereco.cep, opcoes);
+        if (endereco.logradouro) setValue('rua', endereco.logradouro, opcoes);
+        if (endereco.bairro) setValue('bairro', endereco.bairro, opcoes);
+        if (endereco.complemento && !getValues('complemento')) setValue('complemento', endereco.complemento, opcoes);
+        if (endereco.id_estado) setValue('id_estado', endereco.id_estado.toString(), opcoes);
+        if (endereco.id_cidade) setValue('id_cidade', endereco.id_cidade.toString(), opcoes);
+
+        setFocus('numero');
+    }, [setValue, getValues, setFocus]);
+
+    const { buscar: buscarCep, isBuscando: isBuscandoCep } = useBuscaCep({ onEncontrado: preencherEndereco });
 
     useEffect(() => {
         const fetchEstados = async () => {
@@ -185,6 +203,28 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="cep" className="text-zinc-700 font-medium ml-1 flex items-center gap-2">
+                                CEP
+                                {isBuscandoCep && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
+                            </Label>
+                            <Input
+                                id="cep"
+                                placeholder="00000-000"
+                                inputMode="numeric"
+                                maxLength={9}
+                                className="h-11 rounded-xl border-zinc-200 focus-visible:ring-indigo-600"
+                                {...register('cep', {
+                                    onChange: (e) => {
+                                        const cep = formatCep(e.target.value);
+                                        setValue('cep', cep);
+                                        buscarCep(cep);
+                                    },
+                                    onBlur: (e) => buscarCep(e.target.value),
+                                })}
+                            />
+                        </div>
+
                         <div className="md:col-span-2 space-y-2">
                             <Label htmlFor="rua" className="text-zinc-700 font-medium ml-1">Rua / Logradouro</Label>
                             <Input
@@ -226,20 +266,11 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="cep" className="text-zinc-700 font-medium ml-1">CEP</Label>
-                            <Input
-                                id="cep"
-                                placeholder="00000-000"
-                                className="h-11 rounded-xl border-zinc-200 focus-visible:ring-indigo-600"
-                                {...register('cep')}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
                             <Label htmlFor="id_estado" className="text-zinc-700 font-medium ml-1">Estado</Label>
                             <Select
                                 value={estadoSelecionado || undefined}
                                 onValueChange={(val) => {
+                                    if (!val || val === estadoSelecionado) return;
                                     setValue('id_estado', val);
                                     setValue('id_cidade', '');
                                 }}
@@ -267,7 +298,9 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
                             <Label htmlFor="id_cidade" className="text-zinc-700 font-medium ml-1">Cidade</Label>
                             <Select
                                 value={watch('id_cidade') || undefined}
-                                onValueChange={(val) => setValue('id_cidade', val)}
+                                onValueChange={(val) => {
+                                    if (val) setValue('id_cidade', val);
+                                }}
                                 disabled={!estadoSelecionado || isLoadingCidades}
                             >
                                 <SelectTrigger id="id_cidade" className="h-11 rounded-xl border-zinc-200">

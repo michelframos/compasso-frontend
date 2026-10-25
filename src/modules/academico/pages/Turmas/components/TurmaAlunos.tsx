@@ -32,19 +32,40 @@ import { Button } from '@/shared/components/ui/button';
 
 
 
+export type TurmaComAlunos = Pick<Turma, 'id' | 'maximo_alunos' | 'matriculas'> & Partial<Turma>;
+
 interface TurmaAlunosProps {
 
-  turma: Turma | null;
+  turma: TurmaComAlunos | null;
 
   isLoading: boolean;
 
   onRefresh?: () => void;
 
+  /** Oculta matrícula, transferência, contrato e histórico (visão do professor). */
+  somenteLeitura?: boolean;
+
+  /** Torna o nome do aluno clicável (ex.: abrir a ficha do aluno). */
+  onAbrirAluno?: (idAluno: number) => void;
+
 }
 
+const NomeAluno: React.FC<{ nome: string; idAluno: number; className: string; onAbrir?: (idAluno: number) => void }> = ({ nome, idAluno, className, onAbrir }) =>
+  onAbrir ? (
+    <button
+      type="button"
+      onClick={() => onAbrir(idAluno)}
+      className={`${className} text-left hover:text-indigo-600 hover:underline underline-offset-2 hover:cursor-pointer`}
+    >
+      {nome}
+    </button>
+  ) : (
+    <span className={className}>{nome}</span>
+  );
 
 
-export const TurmaAlunos: React.FC<TurmaAlunosProps> = ({ turma, isLoading, onRefresh }) => {
+
+export const TurmaAlunos: React.FC<TurmaAlunosProps> = ({ turma, isLoading, onRefresh, somenteLeitura = false, onAbrirAluno }) => {
 
   const [isAddingAluno, setIsAddingAluno] = useState(false);
 
@@ -116,6 +137,7 @@ export const TurmaAlunos: React.FC<TurmaAlunosProps> = ({ turma, isLoading, onRe
 
         
 
+        {!somenteLeitura && (
         <Dialog open={isAddingAluno} onOpenChange={setIsAddingAluno}>
 
           <DialogTrigger asChild>
@@ -173,6 +195,7 @@ export const TurmaAlunos: React.FC<TurmaAlunosProps> = ({ turma, isLoading, onRe
           </DialogContent>
 
         </Dialog>
+        )}
 
       </div>
 
@@ -192,7 +215,7 @@ export const TurmaAlunos: React.FC<TurmaAlunosProps> = ({ turma, isLoading, onRe
 
           <p className="text-zinc-500 max-w-xs mx-auto mt-1 text-sm">
 
-            Esta turma ainda não possui alunos vinculados no sistema. Clique no botão acima para realizar a primeira matrícula.
+            Esta turma ainda não possui alunos vinculados no sistema.{!somenteLeitura && ' Clique no botão acima para realizar a primeira matrícula.'}
 
           </p>
 
@@ -220,7 +243,7 @@ export const TurmaAlunos: React.FC<TurmaAlunosProps> = ({ turma, isLoading, onRe
 
                 <th className="px-6 py-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Status</th>
 
-                <th className="px-6 py-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider text-right">Ações</th>
+                {!somenteLeitura && <th className="px-6 py-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider text-right">Ações</th>}
 
               </tr>
 
@@ -246,7 +269,12 @@ export const TurmaAlunos: React.FC<TurmaAlunosProps> = ({ turma, isLoading, onRe
 
                         <p className="text-sm font-bold text-zinc-700 group-hover:text-indigo-600 transition-colors">
 
-                          {matricula.aluno?.usuario.nome || 'Aluno não identificado'}
+                          <NomeAluno
+                            nome={matricula.aluno?.usuario.nome || 'Aluno não identificado'}
+                            idAluno={matricula.id_aluno}
+                            className="font-bold"
+                            onAbrir={onAbrirAluno}
+                          />
 
                         </p>
 
@@ -310,6 +338,7 @@ export const TurmaAlunos: React.FC<TurmaAlunosProps> = ({ turma, isLoading, onRe
 
                   </td>
 
+                  {!somenteLeitura && (
                   <td className="px-6 py-4 text-right">
 
                     <div className="flex items-center justify-end gap-2">
@@ -319,6 +348,7 @@ export const TurmaAlunos: React.FC<TurmaAlunosProps> = ({ turma, isLoading, onRe
                     </div>
 
                   </td>
+                  )}
 
                 </tr>
 
@@ -352,7 +382,12 @@ export const TurmaAlunos: React.FC<TurmaAlunosProps> = ({ turma, isLoading, onRe
 
                   <h3 className="text-[15px] font-bold text-zinc-900 truncate">
 
-                    {matricula.aluno?.usuario.nome || 'Aluno não identificado'}
+                    <NomeAluno
+                      nome={matricula.aluno?.usuario.nome || 'Aluno não identificado'}
+                      idAluno={matricula.id_aluno}
+                      className="font-bold max-w-full truncate"
+                      onAbrir={onAbrirAluno}
+                    />
 
                   </h3>
 
@@ -408,11 +443,13 @@ export const TurmaAlunos: React.FC<TurmaAlunosProps> = ({ turma, isLoading, onRe
 
 
 
+              {!somenteLeitura && (
               <div className="flex items-center justify-end gap-2 pt-1 border-t border-zinc-50">
 
                 <Actions matricula={matricula} turma={turma} onRefresh={onRefresh} isMobile />
 
               </div>
+              )}
 
             </div>
 
@@ -448,7 +485,7 @@ const Actions = ({
 
   matricula: any; 
 
-  turma: Turma; 
+  turma: TurmaComAlunos; 
 
   onRefresh?: () => void; 
 

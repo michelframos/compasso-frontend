@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom'
 import { lazyRoute } from '@/shared/lib/lazyRoute'
 import { ModuloProtectedRoute } from '@/shared/components/ModuloProtectedRoute'
+import { RoleProtectedRoute } from '@/shared/components/RoleProtectedRoute'
 
 function withModulo(modulo: string, element: RouteObject['element']): RouteObject['element'] {
   return <ModuloProtectedRoute modulo={modulo}>{element}</ModuloProtectedRoute>
@@ -11,6 +12,24 @@ export const relatoriosRoutes: RouteObject[] = [
     path: 'dashboard',
     element: lazyRoute(() => import('./pages/HomePage'), 'HomePage'),
     handle: { title: 'Início' },
+  },
+  {
+    path: 'remuneracao',
+    element: (
+      <RoleProtectedRoute roles={['admin']}>
+        {lazyRoute(() => import('./pages/RemuneracaoProfessores'), 'RemuneracaoProfessoresPage')}
+      </RoleProtectedRoute>
+    ),
+    handle: { title: 'Remuneração dos professores' },
+  },
+  {
+    path: 'remuneracao/:id',
+    element: (
+      <RoleProtectedRoute roles={['admin']}>
+        {lazyRoute(() => import('./pages/RemuneracaoProfessores/ExtratoProfessor'), 'ExtratoProfessorAdminPage')}
+      </RoleProtectedRoute>
+    ),
+    handle: { title: 'Extrato do professor' },
   },
   {
     path: 'relatorios',

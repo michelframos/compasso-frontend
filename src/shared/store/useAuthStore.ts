@@ -9,6 +9,8 @@ export interface AuthUser {
   email: string;
   role?: string;
   is_super_admin?: boolean;
+  deve_trocar_senha?: boolean;
+  foto_url?: string | null;
 }
 
 export interface ImpersonationState {
@@ -42,6 +44,7 @@ interface AuthState {
   ) => void;
   setTenant: (tenant: Instituicao | null) => void;
   setTenants: (tenants: Instituicao[]) => void;
+  updateUser: (changes: Partial<AuthUser>) => void;
   startImpersonation: (payload: StartImpersonationPayload) => void;
   restorePlatformSession: (user: AuthUser, token: string) => void;
   clearAuth: () => void;
@@ -69,6 +72,9 @@ export const useAuthStore = create<AuthState>()(
       },
       setTenant: (tenant) => set({ tenant }),
       setTenants: (tenants) => set({ tenants }),
+      updateUser: (changes) => set((state) => ({
+        user: state.user ? { ...state.user, ...changes } : state.user,
+      })),
       startImpersonation: ({
         user,
         token,

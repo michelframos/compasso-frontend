@@ -12,6 +12,23 @@ export type Cidade = {
   id_estado: number
 }
 
+export type EnderecoCep = {
+  cep: string
+  logradouro: string | null
+  complemento: string | null
+  bairro: string | null
+  cidade: string | null
+  uf: string | null
+  codigo_ibge: number | null
+  id_estado: number | null
+  id_cidade: number | null
+}
+
+export async function buscarEnderecoPorCep(cep: string) {
+  const { data } = await api.get<{ data: EnderecoCep }>(`/cep/${cep.replace(/\D/g, '')}`)
+  return data.data
+}
+
 export async function listEstados() {
   const { data } = await api.get<Estado[]>('/estados')
   return data

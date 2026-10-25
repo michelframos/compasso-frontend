@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { Button } from '@/shared/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import api from '@/shared/lib/axios'
-import { formatCnpj } from '@/shared/lib/utils'
+import { formatCep, formatCnpj } from '@/shared/lib/utils'
+import type { EnderecoCep } from '@/modules/core/api/localidades'
+import { useBuscaCep } from '@/modules/core/hooks/useBuscaCep'
 import type { PlanoAssinatura } from '../../../types'
 import type { InstituicaoFormValues } from '../hooks/useInstituicaoForm'
 
@@ -52,11 +54,27 @@ export function InstituicaoForm({
   planos,
   isCreate = false,
 }: InstituicaoFormProps) {
-  const { register, watch, setValue, formState: { errors } } = form
+  const { register, watch, setValue, getValues, setFocus, formState: { errors } } = form
   const [estados, setEstados] = useState<Estado[]>([])
   const [cidades, setCidades] = useState<Cidade[]>([])
   const trialMode = watch('trial_mode')
   const idEstado = watch('id_estado')
+  const idCidade = watch('id_cidade')
+
+  const preencherEndereco = useCallback((endereco: EnderecoCep) => {
+    const opcoes = { shouldDirty: true }
+
+    setValue('cep', endereco.cep, opcoes)
+    if (endereco.logradouro) setValue('rua', endereco.logradouro, opcoes)
+    if (endereco.bairro) setValue('bairro', endereco.bairro, opcoes)
+    if (endereco.complemento && !getValues('complemento')) setValue('complemento', endereco.complemento, opcoes)
+    if (endereco.id_estado) setValue('id_estado', endereco.id_estado, opcoes)
+    if (endereco.id_cidade) setValue('id_cidade', endereco.id_cidade, opcoes)
+
+    setFocus('numero')
+  }, [setValue, getValues, setFocus])
+
+  const { buscar: buscarCep, isBuscando: isBuscandoCep } = useBuscaCep({ onEncontrado: preencherEndereco })
 
   useEffect(() => {
     api.get('/estados').then((res) => setEstados(res.data)).catch(() => undefined)
@@ -108,8 +126,24 @@ export function InstituicaoForm({
         <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Endereço</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="space-y-2">
-            <Label htmlFor="cep">CEP</Label>
-            <Input id="cep" {...register('cep')} />
+            <Label htmlFor="cep" className="flex items-center gap-2">
+              CEP
+              {isBuscandoCep && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
+            </Label>
+            <Input
+              id="cep"
+              placeholder="00000-000"
+              inputMode="numeric"
+              maxLength={9}
+              {...register('cep', {
+                onChange: (e) => {
+                  const cep = formatCep(e.target.value)
+                  setValue('cep', cep)
+                  buscarCep(cep)
+                },
+                onBlur: (e) => buscarCep(e.target.value),
+              })}
+            />
           </div>
           <div className="md:col-span-2 space-y-2">
             <Label htmlFor="rua">Rua</Label>
@@ -133,7 +167,10 @@ export function InstituicaoForm({
               id="id_estado"
               className="w-full h-10 rounded-md border border-zinc-200 px-3 text-sm"
               value={idEstado ?? ''}
-              onChange={(e) => setValue('id_estado', e.target.value ? Number(e.target.value) : null, { shouldDirty: true })}
+              onChange={(e) => {
+                setValue('id_estado', e.target.value ? Number(e.target.value) : null, { shouldDirty: true })
+                setValue('id_cidade', null, { shouldDirty: true })
+              }}
             >
               <option value="">Selecione</option>
               {estados.map((e) => (
@@ -146,7 +183,8 @@ export function InstituicaoForm({
             <select
               id="id_cidade"
               className="w-full h-10 rounded-md border border-zinc-200 px-3 text-sm"
-              {...register('id_cidade')}
+              value={idCidade ?? ''}
+              onChange={(e) => setValue('id_cidade', e.target.value ? Number(e.target.value) : null, { shouldDirty: true })}
             >
               <option value="">Selecione</option>
               {cidades.map((c) => (

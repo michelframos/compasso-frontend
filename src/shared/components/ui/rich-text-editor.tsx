@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 
 import { StarterKit } from '@tiptap/starter-kit';
 
@@ -51,6 +51,8 @@ interface RichTextEditorProps {
   onChange: (value: string) => void;
 
   placeholder?: string;
+
+  onEditorReady?: (editor: Editor) => void;
 
 }
 
@@ -115,6 +117,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   onChange,
 
   placeholder = 'Escreva o conteúdo aqui...',
+
+  onEditorReady,
 
 }) => {
 
@@ -182,13 +186,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
     w.tiptapEditor = editor;
 
+    onEditorReady?.(editor);
+
     return () => {
 
       w.tiptapEditor = null;
 
     };
 
-  }, [editor]);
+  }, [editor, onEditorReady]);
 
 
 

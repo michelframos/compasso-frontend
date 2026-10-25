@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, UserRoundPen, Mail, Phone, Trash2, Edit, ChevronUp, ChevronDown, ChevronsUpDown, Search } from 'lucide-react';
+import { Plus, UserRoundPen, Mail, Phone, Trash2, Edit, ChevronUp, ChevronDown, ChevronsUpDown, Search, KeyRound, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Card, CardContent } from '@/shared/components/ui/card';
@@ -11,7 +11,7 @@ import { getErrorMessage } from '@/shared/lib/utils';
 import { useNavigate } from 'react-router-dom';
 
 export const ProfessoresPage: React.FC = () => {
-  const { professores, isLoading, error, deleteProfessor, fetchProfessores } = useProfessores();
+  const { professores, isLoading, error, deleteProfessor, fetchProfessores, enviarAcesso, enviandoAcessoId } = useProfessores();
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({
@@ -200,6 +200,18 @@ export const ProfessoresPage: React.FC = () => {
                             <Button
                               variant="ghost"
                               size="icon"
+                              title="Enviar acesso / redefinir senha"
+                              className="h-8 w-8 rounded-full text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 hover:cursor-pointer"
+                              onClick={() => enviarAcesso(professor.id)}
+                              disabled={enviandoAcessoId === professor.id}
+                            >
+                              {enviandoAcessoId === professor.id
+                                ? <Loader2 className="w-4 h-4 animate-spin" />
+                                : <KeyRound className="w-4 h-4" />}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="h-8 w-8 rounded-full text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 hover:cursor-pointer"
                               onClick={() => handleOpenEdit(professor)}
                             >
@@ -272,6 +284,18 @@ export const ProfessoresPage: React.FC = () => {
                       >
                         <Edit className="w-4 h-4 text-indigo-600" />
                         Editar Perfil
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Enviar acesso / redefinir senha"
+                        className="h-9 w-9 rounded-full text-indigo-600 hover:bg-indigo-50"
+                        onClick={() => enviarAcesso(professor.id)}
+                        disabled={enviandoAcessoId === professor.id}
+                      >
+                        {enviandoAcessoId === professor.id
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : <KeyRound className="w-4 h-4" />}
                       </Button>
                       <Button
                         variant="ghost"

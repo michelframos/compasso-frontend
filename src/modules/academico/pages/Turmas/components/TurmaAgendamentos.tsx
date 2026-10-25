@@ -40,6 +40,12 @@ interface TurmaAgendamentosProps {
 
     professorId?: number;
 
+    /** Exibe apenas a chamada, sem criar, editar ou excluir aulas. */
+    somenteChamada?: boolean;
+
+    /** Substitui o modal de chamada (ex.: abrir a tela de chamada da área do professor). */
+    onChamada?: (aula: AulaAgendamento) => void;
+
 }
 
 
@@ -94,7 +100,7 @@ const STATUS_CONFIG: Record<string, { icon: React.ReactNode; className: string; 
 
 
 
-export const TurmaAgendamentos: React.FC<TurmaAgendamentosProps> = ({ turmaId, professorId }) => {
+export const TurmaAgendamentos: React.FC<TurmaAgendamentosProps> = ({ turmaId, professorId, somenteChamada = false, onChamada }) => {
 
     const { agendamentos, isLoading, refetch } = useTurmaAgendamentos(turmaId);
 
@@ -169,6 +175,11 @@ export const TurmaAgendamentos: React.FC<TurmaAgendamentosProps> = ({ turmaId, p
 
 
     const handleChamada = (aula: AulaAgendamento) => {
+        if (onChamada) {
+            onChamada(aula);
+            return;
+        }
+
 
         setSelectedChamadaAula(aula);
 
@@ -226,6 +237,7 @@ export const TurmaAgendamentos: React.FC<TurmaAgendamentosProps> = ({ turmaId, p
 
             <div className="space-y-6">
 
+                {!somenteChamada && (
                 <div className="flex justify-end pr-2">
 
                     <Button
@@ -245,6 +257,7 @@ export const TurmaAgendamentos: React.FC<TurmaAgendamentosProps> = ({ turmaId, p
                     </Button>
 
                 </div>
+                )}
 
 
 
@@ -322,6 +335,7 @@ export const TurmaAgendamentos: React.FC<TurmaAgendamentosProps> = ({ turmaId, p
 
         <div className="space-y-6 p-1">
 
+            {!somenteChamada && (
             <div className="flex justify-end z-10 py-1">
 
                 <Button
@@ -341,6 +355,7 @@ export const TurmaAgendamentos: React.FC<TurmaAgendamentosProps> = ({ turmaId, p
                 </Button>
 
             </div>
+            )}
 
 
 
@@ -520,6 +535,7 @@ export const TurmaAgendamentos: React.FC<TurmaAgendamentosProps> = ({ turmaId, p
 
                                             </Button>
 
+                                            {!somenteChamada && (<>
                                             <Button
 
                                                 type="button"
@@ -559,6 +575,7 @@ export const TurmaAgendamentos: React.FC<TurmaAgendamentosProps> = ({ turmaId, p
                                                 <Trash2 className="w-4 h-4" />
 
                                             </Button>
+                                            </>)}
 
                                         </div>
 
@@ -676,6 +693,7 @@ export const TurmaAgendamentos: React.FC<TurmaAgendamentosProps> = ({ turmaId, p
 
                                             </Button>
 
+                                            {!somenteChamada && (<>
                                             <Button
 
                                                 type="button"
@@ -703,6 +721,7 @@ export const TurmaAgendamentos: React.FC<TurmaAgendamentosProps> = ({ turmaId, p
                                                 <Trash2 className="w-4 h-4" />
 
                                             </Button>
+                                            </>)}
 
                                         </div>
 

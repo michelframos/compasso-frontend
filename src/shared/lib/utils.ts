@@ -20,6 +20,15 @@ export function formatCnpj(value: string): string {
     .replace(/^(.{2})\.(.{3})\.(.{3})\/(.{4})(.)/, '$1.$2.$3/$4-$5')
 }
 
+export function unmaskCep(value: string): string {
+  return value.replace(/\D/g, '').slice(0, 8)
+}
+
+/** Aplica a máscara 00000-000 progressivamente enquanto o usuário digita. */
+export function formatCep(value: string): string {
+  return unmaskCep(value).replace(/^(\d{5})(\d)/, '$1-$2')
+}
+
 /**
  * Extrai a mensagem de erro de uma exceção Axios.
  * Prioriza mensagens retornadas pelo backend (message e errors de validação).

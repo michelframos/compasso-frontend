@@ -34,6 +34,8 @@ import { PagamentoModal } from '@/modules/financeiro';
 
 import { useHasModulo } from '@/shared/hooks/useHasModulo';
 
+import { useAuthStore } from '@/shared/store/useAuthStore';
+
 
 
 const idConverter = (v: unknown) => {
@@ -179,6 +181,50 @@ const aulaSchema = z.object({
 
 
 type AulaFormValues = z.infer<typeof aulaSchema>;
+
+
+
+interface TurmaDaApi {
+
+    id: number;
+
+    status: string;
+
+    id_professor?: number | null;
+
+    curso?: { id?: number; nome: string };
+
+    nivel?: { nome: string };
+
+    horarios?: { dia_semana: string; hora_inicio: string }[];
+
+}
+
+
+
+const turmaParaSelect = (turma: TurmaDaApi): TurmaBasico => {
+
+    const horario = turma.horarios?.[0];
+
+    return {
+
+        id: turma.id,
+
+        status: turma.status,
+
+        dia_semana: horario?.dia_semana ?? '',
+
+        horario_inicio: horario?.hora_inicio ?? '',
+
+        curso: turma.curso,
+
+        nivel: turma.nivel,
+
+        id_professor: turma.id_professor ?? undefined,
+
+    };
+
+};
 
 
 
@@ -358,6 +404,10 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
     const hasFinanceiro = useHasModulo('financeiro');
 
+    const ehProfessor = useAuthStore((state) => state.user?.role) === 'professor';
+
+    const [professorFixo, setProfessorFixo] = useState<{ id: number; nome: string } | null>(null);
+
     const [turmas, setTurmas] = useState<TurmaBasico[]>([]);
 
     const [alunos, setAlunos] = useState<AlunoBasico[]>([]);
@@ -516,11 +566,192 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
 
 
+    // Professor logado: ele mesmo, só as turmas dele e os cursos que ele leciona.
+
+    useEffect(() => {
+
+        if (!ehProfessor) return;
+
+
+
+        let cancelled = false;
+
+
+
+        const carregar = async () => {
+
+            setIsLoadingProfessores(true);
+
+            setIsLoadingTurmas(!defaultTurmaId);
+
+            setIsLoadingCursos(true);
+
+            setIsLoadingAlunos(true);
+
+            try {
+
+                const [me, turmasRes, alunosRes] = await Promise.all([
+
+                    api.get('/professor/me'),
+
+                    defaultTurmaId
+
+                        ? Promise.resolve(null)
+
+                        : api.get('/professor/me/turmas', { params: { situacao: 'todas' } }),
+
+                    api.get('/professor/me/alunos'),
+
+                ]);
+
+                if (cancelled) return;
+
+
+
+                const professor = me.data.data as { id: number; nome: string };
+
+                setProfessorFixo({ id: professor.id, nome: professor.nome });
+
+                setValue('id_professor', professor.id, { shouldValidate: true });
+
+
+
+                const turmasApi: TurmaDaApi[] = turmasRes?.data.data || [];
+
+                const abertas = turmasApi.filter((t) => t.status === 'aberta' || t.status === 'em_andamento');
+
+                if (initialData?.id_turma && !abertas.some((t) => t.id === initialData.id_turma)) {
+
+                    const atual = turmasApi.find((t) => t.id === initialData.id_turma);
+
+                    if (atual) abertas.push(atual);
+
+                }
+
+                if (!defaultTurmaId) {
+
+                    setTurmas(abertas.map(turmaParaSelect));
+
+                    if (initialData?.id_turma) {
+
+                        setTimeout(() => setValue('id_turma', Number(initialData.id_turma)), 0);
+
+                    }
+
+                }
+
+
+
+                const cursosMap = new Map<number, string>();
+
+                turmasApi.forEach((turma) => {
+
+                    if (turma.curso?.id) cursosMap.set(turma.curso.id, turma.curso.nome);
+
+                });
+
+                const alunosApi: { id: number; nome: string | null; matriculas?: { curso?: { id: number; nome: string } | null }[] }[] = alunosRes.data.data || [];
+
+                const alunosDoProfessor: AlunoBasico[] = alunosApi.map((aluno) => ({
+
+                    id: aluno.id,
+
+                    usuario: { nome: aluno.nome || `Aluno #${aluno.id}` },
+
+                }));
+
+                alunosApi.forEach((aluno) => {
+
+                    aluno.matriculas?.forEach((matricula) => {
+
+                        if (matricula.curso?.id) cursosMap.set(matricula.curso.id, matricula.curso.nome);
+
+                    });
+
+                });
+
+                const alunoAtual = (initialData as { aluno_especifico?: { id?: number; usuario?: { nome?: string } } } | undefined)?.aluno_especifico;
+
+                if (alunoAtual?.id && !alunosDoProfessor.some((aluno) => aluno.id === alunoAtual.id)) {
+
+                    alunosDoProfessor.push({
+
+                        id: alunoAtual.id,
+
+                        usuario: { nome: alunoAtual.usuario?.nome || `Aluno #${alunoAtual.id}` },
+
+                    });
+
+                }
+
+                alunosDoProfessor.sort((a, b) => (a.usuario?.nome ?? '').localeCompare(b.usuario?.nome ?? '', 'pt-BR'));
+
+                setTodosAlunos(alunosDoProfessor);
+
+                const cursoAtual = (initialData as { curso?: { id: number; nome: string } } | undefined)?.curso;
+
+                if (cursoAtual?.id && cursoAtual.nome) cursosMap.set(cursoAtual.id, cursoAtual.nome);
+
+
+
+                setCursos(
+
+                    [...cursosMap.entries()]
+
+                        .map(([id, nome]) => ({ id, nome }))
+
+                        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+
+                );
+
+                if (initialData?.id_curso) {
+
+                    setTimeout(() => setValue('id_curso', Number(initialData.id_curso)), 0);
+
+                }
+
+            } catch (error) {
+
+                if (!cancelled) toast.error(getErrorMessage(error, 'Não foi possível carregar seus dados de agendamento.'));
+
+            } finally {
+
+                if (!cancelled) {
+
+                    setIsLoadingProfessores(false);
+
+                    setIsLoadingTurmas(false);
+
+                    setIsLoadingCursos(false);
+
+                    setIsLoadingAlunos(false);
+
+                }
+
+            }
+
+        };
+
+
+
+        carregar();
+
+        return () => {
+
+            cancelled = true;
+
+        };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- o nome do curso atual só complementa a lista quando a aula editada muda
+    }, [ehProfessor, defaultTurmaId, initialData?.id, initialData?.id_turma, initialData?.id_curso, setValue]);
+
+
+
     // Carrega turmas ativas ao montar (exceto quando a turma vem via prop direta)
 
     useEffect(() => {
 
-        if (defaultTurmaId) return;
+        if (ehProfessor || defaultTurmaId) return;
 
 
 
@@ -578,13 +809,17 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
         fetchTurmas();
 
-    }, [defaultTurmaId, initialData?.id_turma, setValue]);
+    }, [ehProfessor, defaultTurmaId, initialData?.id_turma, setValue]);
 
 
 
     // Carrega todos os alunos ativos para agendamento avulso
 
     useEffect(() => {
+
+        if (ehProfessor) return;
+
+
 
         const fetchTodosAlunos = async () => {
 
@@ -610,13 +845,17 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
         fetchTodosAlunos();
 
-    }, []);
+    }, [ehProfessor]);
 
 
 
     // Carrega professores para o select
 
     useEffect(() => {
+
+        if (ehProfessor) return;
+
+
 
         const fetchProfessores = async () => {
 
@@ -642,13 +881,17 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
         fetchProfessores();
 
-    }, []);
+    }, [ehProfessor]);
 
 
 
     // Carrega cursos para o select (agendamento avulso)
 
     useEffect(() => {
+
+        if (ehProfessor) return;
+
+
 
         const fetchCursos = async () => {
 
@@ -680,7 +923,7 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
         fetchCursos();
 
-    }, [initialData?.id_curso, setValue]);
+    }, [ehProfessor, initialData?.id_curso, setValue]);
 
 
 
@@ -801,7 +1044,7 @@ export const AulaForm: React.FC<AulaFormProps> = ({
                 // Na turma inicial respeita o professor já informado; ao trocar de turma, assume o titular da nova.
                 const turmaFoiAlterada = idTurma !== turmaInicial;
 
-                if (turma?.id_professor && (!getValues('id_professor') || turmaFoiAlterada)) {
+                if (!ehProfessor && turma?.id_professor && (!getValues('id_professor') || turmaFoiAlterada)) {
 
                     setValue('id_professor', turma.id_professor, { shouldValidate: true });
 
@@ -819,7 +1062,7 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
         fetchTurmaDetalhes();
 
-    }, [idTurma, turmaInicial, getValues, setValue]);
+    }, [ehProfessor, idTurma, turmaInicial, getValues, setValue]);
 
 
 
@@ -991,13 +1234,13 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
         const cursoFoiAlterado = !!cursoAnterior && cursoAnterior !== idCurso;
 
-        if (!getValues('id_professor') || cursoFoiAlterado) {
+        if (!ehProfessor && (!getValues('id_professor') || cursoFoiAlterado)) {
 
             setValue('id_professor', professor, { shouldValidate: true });
 
         }
 
-    }, [idCurso, idTurma, matriculasAtivasAluno, getValues, setValue]);
+    }, [ehProfessor, idCurso, idTurma, matriculasAtivasAluno, getValues, setValue]);
 
 
 
@@ -1036,6 +1279,8 @@ export const AulaForm: React.FC<AulaFormProps> = ({
                 ...values,
 
                 id_turma: values.id_turma || null,
+
+                id_professor: professorFixo?.id || values.id_professor,
 
                 id_aluno_especifico: values.id_aluno_especifico || null,
 
@@ -1315,7 +1560,21 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
                     <Label htmlFor="id_professor">Professor *</Label>
 
-                    {isLoadingProfessores ? (
+                    {professorFixo ? (
+
+                        <Input
+
+                            value={professorFixo.nome}
+
+                            disabled
+
+                            readOnly
+
+                            className="h-11 rounded-xl bg-zinc-50"
+
+                        />
+
+                    ) : isLoadingProfessores ? (
 
                         <div className="flex items-center gap-2 text-sm text-zinc-500 py-2">
 
@@ -2023,7 +2282,7 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
                         type="submit"
 
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || (ehProfessor && !professorFixo)}
 
                         className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-10 h-9 font-bold shadow-lg shadow-indigo-100 hover:cursor-pointer w-full md:w-auto"
 

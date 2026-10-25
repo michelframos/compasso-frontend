@@ -1,6 +1,7 @@
 import React from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/shared/store/useAuthStore'
+import { getHomePath } from '@/shared/lib/homePath'
 
 interface PlatformProtectedRouteProps {
   children: React.ReactNode
@@ -15,12 +16,8 @@ export const PlatformProtectedRoute: React.FC<PlatformProtectedRouteProps> = ({ 
     return <Navigate to="/platform/login" replace />
   }
 
-  if (impersonation?.active) {
-    return <Navigate to="/dashboard" replace />
-  }
-
-  if (!user?.is_super_admin) {
-    return <Navigate to="/dashboard" replace />
+  if (impersonation?.active || !user?.is_super_admin) {
+    return <Navigate to={getHomePath(user?.role)} replace />
   }
 
   return <>{children}</>

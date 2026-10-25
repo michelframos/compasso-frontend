@@ -17,6 +17,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/login" replace />
   }
 
+  if (user?.deve_trocar_senha) {
+    return <Navigate to="/trocar-senha" replace />
+  }
+
   if (!tenant && tenants.length > 1) {
     return <Navigate to="/selecionar-instituicao" replace />
   }

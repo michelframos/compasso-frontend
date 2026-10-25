@@ -1,4 +1,6 @@
 import type { RouteObject } from 'react-router-dom'
+import { ModuloProtectedRoute } from '@/shared/components/ModuloProtectedRoute'
+import { RoleProtectedRoute } from '@/shared/components/RoleProtectedRoute'
 import { lazyRoute } from '@/shared/lib/lazyRoute'
 
 export const academicoRoutes: RouteObject[] = [
@@ -15,6 +17,33 @@ export const academicoRoutes: RouteObject[] = [
     path: 'turmas/:id',
     element: lazyRoute(() => import('./pages/Turmas/TurmaFormPage'), 'TurmaFormPage'),
     handle: { title: 'Editar Turma' },
+  },
+  {
+    path: 'progressoes',
+    element: (
+      <ModuloProtectedRoute modulo="progressao">
+        {lazyRoute(() => import('./pages/Progressoes'), 'ProgressoesPage')}
+      </ModuloProtectedRoute>
+    ),
+    handle: { title: 'Progressões de nível' },
+  },
+  {
+    path: 'solicitacoes-aulas',
+    element: (
+      <RoleProtectedRoute roles={['admin', 'secretaria']}>
+        {lazyRoute(() => import('./pages/SolicitacoesAulas'), 'SolicitacoesAulasPage')}
+      </RoleProtectedRoute>
+    ),
+    handle: { title: 'Solicitações de aula' },
+  },
+  {
+    path: 'avisos',
+    element: (
+      <RoleProtectedRoute roles={['admin', 'secretaria']}>
+        {lazyRoute(() => import('./pages/Avisos'), 'AvisosPage')}
+      </RoleProtectedRoute>
+    ),
+    handle: { title: 'Avisos' },
   },
   {
     path: 'matriculas',

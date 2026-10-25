@@ -52,3 +52,8 @@ export async function updateProfessor(id: number | string, payload: Record<strin
 export async function deleteProfessor(id: number | string) {
   await api.delete(`/professores/${id}`)
 }
+
+export async function enviarAcessoProfessor(id: number | string) {
+  const { data } = await api.post<{ message: string }>(`/professores/${id}/enviar-acesso`)
+  return data
+}

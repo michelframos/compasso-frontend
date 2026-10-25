@@ -6,6 +6,8 @@ export type ModuloAppKey =
   | 'espetaculos'
   | 'instrumentos'
   | 'relatorios'
+  | 'avaliacoes'
+  | 'progressao'
   | (string & {})
 
 export function useHasModulo(modulo: ModuloAppKey): boolean {

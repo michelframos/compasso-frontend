@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '@/shared/lib/axios'
 import { useAuthStore, type AuthUser as StoreAuthUser } from '@/shared/store/useAuthStore'
 import { listMinhasInstituicoes } from '@/modules/core/api/auth'
+import { getHomePath } from '@/shared/lib/homePath'
 import type { AuthUser } from '@/modules/core/types'
 
 function parseHandoffParams(): { token: string | null; tenantSlug: string | null } {
@@ -60,10 +61,11 @@ export function useAuthCallback() {
           email: userData.email,
           role: userData.role,
           is_super_admin: Boolean(userData.is_super_admin),
+          deve_trocar_senha: Boolean(userData.deve_trocar_senha),
         }
 
         setAuth(user, token, tenant, tenants)
-        navigate('/dashboard', { replace: true })
+        navigate(getHomePath(user.role), { replace: true })
       } catch {
         if (cancelled) return
         clearAuth()

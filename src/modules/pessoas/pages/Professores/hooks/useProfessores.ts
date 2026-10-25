@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react';
 import api from '@/shared/lib/axios';
 import { AxiosError } from 'axios';
+import { toast } from 'sonner';
+import { getErrorMessage } from '@/shared/lib/utils';
+import { enviarAcessoProfessor } from '../../../api/professores';
 
 export type Aluno = {
   id: number;
@@ -101,7 +104,19 @@ export const useProfessores = () => {
     }
   };
 
+  const [enviandoAcessoId, setEnviandoAcessoId] = useState<number | null>(null);
 
+  const enviarAcesso = async (id: number) => {
+    setEnviandoAcessoId(id);
+    try {
+      const { message } = await enviarAcessoProfessor(id);
+      toast.success(message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, 'Não foi possível enviar o acesso ao professor.'));
+    } finally {
+      setEnviandoAcessoId(null);
+    }
+  };
 
   return {
     professores,
@@ -109,5 +124,7 @@ export const useProfessores = () => {
     error,
     fetchProfessores,
     deleteProfessor,
+    enviarAcesso,
+    enviandoAcessoId,
   };
 };

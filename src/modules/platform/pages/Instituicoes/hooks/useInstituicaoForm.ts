@@ -9,6 +9,15 @@ import { listPlanos } from '../../../api/planos'
 import type { PlanoAssinatura } from '../../../types'
 import { formatCnpj, getErrorMessage, unmaskCnpj } from '@/shared/lib/utils'
 
+const idOpcional = z
+  .union([z.string(), z.number(), z.null()])
+  .optional()
+  .transform((valor) => {
+    if (valor === '' || valor === null || valor === undefined) return null
+    const numero = Number(valor)
+    return Number.isInteger(numero) && numero > 0 ? numero : null
+  })
+
 const baseInstituicaoSchema = z.object({
   slug: z.string().min(1, 'Slug é obrigatório').max(64).regex(/^[a-z0-9_-]+$/i, 'Slug inválido'),
   nome_fantasia: z.string().min(1, 'Nome fantasia é obrigatório').max(255),
@@ -22,10 +31,10 @@ const baseInstituicaoSchema = z.object({
   bairro: z.string().optional().default(''),
   complemento: z.string().optional().default(''),
   cep: z.string().optional().default(''),
-  id_estado: z.union([z.coerce.number(), z.literal(''), z.null()]).optional().transform((v) => (v === '' || v === null || v === undefined ? null : Number(v))),
-  id_cidade: z.union([z.coerce.number(), z.literal(''), z.null()]).optional().transform((v) => (v === '' || v === null || v === undefined ? null : Number(v))),
+  id_estado: idOpcional,
+  id_cidade: idOpcional,
   status: z.enum(['a', 'i', 's']).default('a'),
-  id_plano_assinatura: z.union([z.coerce.number(), z.literal(''), z.null()]).optional().transform((v) => (v === '' || v === null || v === undefined ? null : Number(v))),
+  id_plano_assinatura: idOpcional,
   assinatura_status: z.enum(['trialing', 'active', 'past_due', 'canceled']).default('trialing'),
   assinatura_inicia_em: z.string().optional().default(''),
   trial_mode: z.enum(['padrao', 'dias', 'data']).default('padrao'),

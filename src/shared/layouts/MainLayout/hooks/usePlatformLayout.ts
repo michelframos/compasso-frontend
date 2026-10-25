@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/shared/store/useAuthStore'
 import { useLayoutStore } from '@/shared/store/useLayoutStore'
 import { logout as logoutApi } from '@/modules/core/api/auth'
-import { Building2, ClipboardList, CreditCard, LayoutDashboard, LayoutGrid, MessageSquareQuote } from 'lucide-react'
+import { Building2, ClipboardList, CreditCard, LayoutDashboard, LayoutGrid, MessageSquareQuote, Settings } from 'lucide-react'
 import type { LayoutMenuItem } from './layoutTypes'
 
 export const usePlatformLayout = () => {
@@ -29,6 +29,7 @@ export const usePlatformLayout = () => {
     { icon: MessageSquareQuote, path: '/platform/depoimentos', label: 'Depoimentos' },
     { icon: LayoutGrid, path: '/platform/modulos', label: 'Módulos' },
     { icon: ClipboardList, path: '/platform/solicitacoes', label: 'Solicitações' },
+    { icon: Settings, path: '/platform/configuracoes', label: 'Configurações' },
   ]
 
   const bottomMenuItems: LayoutMenuItem[] = []
@@ -56,6 +57,7 @@ export const usePlatformLayout = () => {
     showTenantSelector: false,
     showTopNav: false,
     homePath: '/platform',
+    perfilPath: null,
     headerSubtitle: 'Plataforma',
   }
 }

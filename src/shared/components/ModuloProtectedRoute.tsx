@@ -12,7 +12,8 @@ export const ModuloProtectedRoute: React.FC<ModuloProtectedRouteProps> = ({ modu
   const allowed = tenant?.modulos ?? []
 
   if (!allowed.includes(modulo)) {
-    return <Navigate to="/assinatura" replace />
+    const desligadoPelaEscola = tenant?.modulos_contratados?.includes(modulo) ?? false
+    return <Navigate to={desligadoPelaEscola ? '/' : '/assinatura'} replace />
   }
 
   return <>{children}</>

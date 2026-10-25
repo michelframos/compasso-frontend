@@ -39,6 +39,10 @@ api.interceptors.response.use(
       useAuthStore.getState().clearAuth();
     }
 
+    if (error.response?.status === 403 && error.response.data?.code === 'troca_senha_obrigatoria') {
+      useAuthStore.getState().updateUser({ deve_trocar_senha: true });
+    }
+
     return Promise.reject(error);
   },
 );

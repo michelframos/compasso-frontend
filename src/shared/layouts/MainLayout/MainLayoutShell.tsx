@@ -40,9 +40,28 @@ export const MainLayoutShell: React.FC<MainLayoutShellProps> = ({ layout, childr
     showTenantSelector,
     showTopNav,
     homePath,
+    perfilPath,
     headerSubtitle,
   } = layout
 
+  const nomeUsuario = user?.nome ?? user?.name
+  const identificacao = (
+    <>
+      <div className="text-right hidden sm:block">
+        <p className="text-xs font-bold text-zinc-900 leading-none">{nomeUsuario}</p>
+        <p className="text-[10px] text-zinc-500 mt-0.5 capitalize">
+          {headerSubtitle || user?.role || 'Usuário'}
+        </p>
+      </div>
+      <div className="w-9 h-9 rounded-full bg-indigo-100 border-2 border-white overflow-hidden shadow-sm">
+        <img
+          src={user?.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeUsuario ?? '')}&background=4f46e5&color=fff`}
+          alt={nomeUsuario}
+          className="w-full h-full object-cover"
+        />
+      </div>
+    </>
+  )
   const hasFinanceiro = useHasModulo('financeiro')
   const hasRelatorios = useHasModulo('relatorios')
 
@@ -173,21 +192,13 @@ export const MainLayoutShell: React.FC<MainLayoutShellProps> = ({ layout, childr
 
             <div className="h-6 w-[1px] bg-zinc-200 mx-1 hidden sm:block" />
 
-            <div className="flex items-center gap-2.5">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-zinc-900 leading-none">{user?.name}</p>
-                <p className="text-[10px] text-zinc-500 mt-0.5 capitalize">
-                  {headerSubtitle || user?.role || 'Usuário'}
-                </p>
-              </div>
-              <div className="w-9 h-9 rounded-full bg-indigo-100 border-2 border-white overflow-hidden shadow-sm">
-                <img
-                  src={`https://ui-avatars.com/api/?name=${user?.name}&background=4f46e5&color=fff`}
-                  alt={user?.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
+            {perfilPath ? (
+              <Link to={perfilPath} className="flex items-center gap-2.5 rounded-full hover:opacity-80 transition-opacity" title="Meu perfil">
+                {identificacao}
+              </Link>
+            ) : (
+              <div className="flex items-center gap-2.5">{identificacao}</div>
+            )}
           </div>
         </header>
 

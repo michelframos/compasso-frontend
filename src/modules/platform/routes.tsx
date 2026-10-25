@@ -77,4 +77,9 @@ export const platformRoutes: RouteObject[] = [
     element: lazyRoute(() => import('./pages/Solicitacoes'), 'PlatformSolicitacoesPage'),
     handle: { title: 'Solicitações' },
   },
+  {
+    path: 'configuracoes',
+    element: lazyRoute(() => import('./pages/Configuracoes'), 'PlatformConfiguracoesPage'),
+    handle: { title: 'Configurações' },
+  },
 ]

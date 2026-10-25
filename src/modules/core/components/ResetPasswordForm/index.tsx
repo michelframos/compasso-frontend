@@ -4,13 +4,14 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { CustomInput } from '@/shared/components/CustomInput';
 import { CustomLoadingButton } from '@/shared/components/CustomLoadingButton';
 
 export const ResetPasswordForm: React.FC = () => {
   const location = useLocation();
-  const stateEmail = location.state?.email || '';
+  const [searchParams] = useSearchParams();
+  const stateEmail = location.state?.email || searchParams.get('email') || '';
 
   const { form, onSubmit, isLoading } = useResetPassword(stateEmail);
   const { register, handleSubmit, formState: { errors } } = form;

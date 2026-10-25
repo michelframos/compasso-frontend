@@ -5,5 +5,7 @@ export interface LayoutMenuItem {
   path: string
   label: string
   roles?: string[]
+  /** Quando true, admin não herda o item automaticamente. */
+  somenteRoles?: boolean
   modulo?: string
 }

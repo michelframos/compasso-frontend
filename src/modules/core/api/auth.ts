@@ -1,11 +1,29 @@
 import api from '@/shared/lib/axios'
 import type {
   AuthResponse,
+  AuthUser,
   Instituicao,
+  RegistrarEscolaResponse,
   SwitchInstituicaoResponse,
 } from '@/modules/core/types'
 
 export type LoginPayload = {
+  email: string
+  password: string
+  tenant_cnpj: string
+  activation_code?: string
+}
+
+export type RegistrarEscolaPayload = {
+  nome_fantasia: string
+  cnpj: string
+  responsavel_nome: string
+  email: string
+  password: string
+  password_confirmation: string
+}
+
+export type ReenviarCodigoAtivacaoPayload = {
   email: string
   password: string
   tenant_cnpj: string
@@ -35,8 +53,19 @@ export async function login(payload: LoginPayload) {
     email: payload.email,
     password: payload.password,
     tenant_cnpj: payload.tenant_cnpj,
+    ...(payload.activation_code ? { activation_code: payload.activation_code } : {}),
   })
 
+  return data
+}
+
+export async function registrarEscola(payload: RegistrarEscolaPayload) {
+  const { data } = await api.post<RegistrarEscolaResponse>('/registrar-escola', payload)
+  return data
+}
+
+export async function reenviarCodigoAtivacao(payload: ReenviarCodigoAtivacaoPayload) {
+  const { data } = await api.post<{ message: string }>('/ativacao/reenviar', payload)
   return data
 }
 
@@ -74,6 +103,17 @@ export async function resetPassword(payload: {
   password_confirmation: string
 }) {
   const { data } = await api.post<{ message: string }>('/reset-password', payload)
+  return data
+}
+
+export type AlterarSenhaPayload = {
+  senha_atual: string
+  password: string
+  password_confirmation: string
+}
+
+export async function alterarSenha(payload: AlterarSenhaPayload) {
+  const { data } = await api.put<{ data: AuthUser; message: string }>('/me/senha', payload)
   return data
 }
 

@@ -6,7 +6,9 @@ import { Label } from '@/shared/components/ui/label';
 import { Loader2, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/shared/lib/axios';
-import { getErrorMessage } from '@/shared/lib/utils';
+import { formatCep, getErrorMessage } from '@/shared/lib/utils';
+import type { EnderecoCep } from '@/modules/core/api/localidades';
+import { useBuscaCep } from '@/modules/core/hooks/useBuscaCep';
 import type { AlunoFormValues } from '../hooks/useAlunoForm';
 
 interface AddressFieldsProps {
@@ -27,13 +29,11 @@ interface Cidade {
 }
 
 export const AddressFields: React.FC<AddressFieldsProps> = ({ form, prefix = '' }) => {
-  const { register, watch, setValue, getValues, control, formState: { errors } } = form;
+  const { register, watch, setValue, getValues, setFocus, control, formState: { errors } } = form;
   const [estados, setEstados] = useState<Estado[]>([]);
   const [cidades, setCidades] = useState<Cidade[]>([]);
-  const [isLoadingCep, setIsLoadingCep] = useState(false);
 
   const idEstadoAtual = watch((prefix + 'id_estado') as any);
-  const cepAtual = watch((prefix + 'cep') as any);
 
   useEffect(() => {
     api.get('/estados').then(res => setEstados(res.data)).catch((err) => toast.error(getErrorMessage(err, 'Erro ao carregar estados')));
@@ -61,55 +61,23 @@ export const AddressFields: React.FC<AddressFieldsProps> = ({ form, prefix = '' 
     }
   }, [idEstadoAtual, prefix, getValues, setValue]);
 
-  const handleCepBlur = useCallback(async () => {
-    if (!cepAtual || cepAtual.length < 8) return;
-    const cleanCep = cepAtual.replace(/\D/g, '');
-    if (cleanCep.length !== 8) return;
+  const preencherEndereco = useCallback((endereco: EnderecoCep) => {
+    const opcoes = { shouldValidate: true, shouldDirty: true };
+    const campo = (nome: string) => (prefix + nome) as any;
 
-    setIsLoadingCep(true);
-    try {
-      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-      const data = await response.json();
-
-      if (data.erro) {
-        toast.error('CEP não encontrado');
-        return;
-      }
-
-      if (data.logradouro) setValue((prefix + 'rua') as any, data.logradouro, { shouldValidate: true, shouldDirty: true });
-      if (data.bairro) setValue((prefix + 'bairro') as any, data.bairro, { shouldValidate: true, shouldDirty: true });
-      if (data.complemento) setValue((prefix + 'complemento') as any, data.complemento, { shouldValidate: true, shouldDirty: true });
-
-      if (!data.logradouro || !data.bairro) {
-        toast.info('CEP de cidade única. Preencha a rua e o bairro manualmente.');
-      }
-
-      if (data.uf) {
-        const estadoEncontrado = estados.find(e => e.sigla === data.uf);
-        if (estadoEncontrado) {
-          setValue((prefix + 'id_estado') as any, estadoEncontrado.id, { shouldValidate: true, shouldDirty: true });
-
-          const cidResponse = await api.get(`/estados/${estadoEncontrado.id}/cidades`);
-          const cidadesLocal = cidResponse.data as Cidade[];
-          setCidades(cidadesLocal);
-
-          if (data.localidade) {
-            const cidadeFormatada = data.localidade.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-            const cidadeEncontrada = cidadesLocal.find(c =>
-              c.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase() === cidadeFormatada
-            );
-            if (cidadeEncontrada) {
-              setValue((prefix + 'id_cidade') as any, cidadeEncontrada.id, { shouldValidate: true, shouldDirty: true });
-            }
-          }
-        }
-      }
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Erro ao consultar o ViaCEP'));
-    } finally {
-      setIsLoadingCep(false);
+    setValue(campo('cep'), endereco.cep, opcoes);
+    if (endereco.logradouro) setValue(campo('rua'), endereco.logradouro, opcoes);
+    if (endereco.bairro) setValue(campo('bairro'), endereco.bairro, opcoes);
+    if (endereco.complemento && !getValues(campo('complemento'))) {
+      setValue(campo('complemento'), endereco.complemento, opcoes);
     }
-  }, [cepAtual, prefix, setValue, estados]);
+    if (endereco.id_estado) setValue(campo('id_estado'), endereco.id_estado, opcoes);
+    if (endereco.id_cidade) setValue(campo('id_cidade'), endereco.id_cidade, opcoes);
+
+    setFocus(campo('numero'));
+  }, [prefix, setValue, getValues, setFocus]);
+
+  const { buscar: buscarCep, isBuscando: isLoadingCep } = useBuscaCep({ onEncontrado: preencherEndereco });
 
   const getErrorProp = (field: string) => {
     return prefix ? (errors as any)[`${prefix}${field}`] : (errors as any)[field];
@@ -129,8 +97,15 @@ export const AddressFields: React.FC<AddressFieldsProps> = ({ form, prefix = '' 
             {isLoadingCep && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
           </Label>
           <Input
-            {...register((prefix + 'cep') as any)}
-            onBlur={handleCepBlur}
+            {...register((prefix + 'cep') as any, {
+              onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                const cep = formatCep(e.target.value);
+                setValue((prefix + 'cep') as any, cep, { shouldDirty: true });
+                buscarCep(cep);
+              },
+              onBlur: (e: React.FocusEvent<HTMLInputElement>) => buscarCep(e.target.value),
+            })}
+            inputMode="numeric"
             placeholder="00000-000"
             className="h-11 rounded-xl border-zinc-200 focus-visible:ring-indigo-600"
             maxLength={9}

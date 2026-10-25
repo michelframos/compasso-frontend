@@ -7,6 +7,8 @@ export { useAlunos as useAlunosParaSelect } from './pages/Matriculas/hooks/useAl
 export { AulaForm, type AulaFormInitialData } from './pages/Turmas/components/AulaForm'
 export { AulaModal } from './pages/Turmas/components/AulaModal'
 export { AulaChamadaModal } from './pages/Turmas/components/AulaChamadaModal'
+export { TurmaAlunos, type TurmaComAlunos } from './pages/Turmas/components/TurmaAlunos'
+export { TurmaAgendamentos } from './pages/Turmas/components/TurmaAgendamentos'
 export { MatriculaForm } from './pages/Matriculas/components/MatriculaForm'
 export type { Curso, PaginationMeta, PaginatedResponse } from './pages/Cursos/types'
 export type { Matricula } from './pages/Matriculas/types'

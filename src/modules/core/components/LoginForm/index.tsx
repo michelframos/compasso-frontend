@@ -10,7 +10,17 @@ interface LoginFormProps {
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
-  const { form, registerCnpj, onSubmit, isLoading, error } = useLoginForm(mode);
+  const {
+    form,
+    registerCnpj,
+    registerActivationCode,
+    onSubmit,
+    onResendCode,
+    isLoading,
+    isResending,
+    needsActivation,
+    error,
+  } = useLoginForm(mode);
   const { register, handleSubmit, formState: { errors } } = form;
   const isPlatform = mode === 'platform';
 
@@ -76,14 +86,50 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
           )}
         </div>
 
+        {!isPlatform && needsActivation && (
+          <div className="space-y-2 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+            <p className="text-sm text-zinc-600">
+              Primeiro acesso: informe o código de ativação enviado para o e-mail do responsável.
+            </p>
+            <CustomInput
+              id="activation_code"
+              label="Código de ativação"
+              type="text"
+              placeholder="000000"
+              register={registerActivationCode}
+              errors={errors}
+              disabled={isLoading}
+            />
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={onResendCode}
+                disabled={isResending || isLoading}
+                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+              >
+                {isResending ? 'Reenviando...' : 'Reenviar código'}
+              </button>
+            </div>
+          </div>
+        )}
+
         <CustomLoadingButton
           isLoading={isLoading}
-          text="Entrar"
+          text={needsActivation && !isPlatform ? 'Ativar e entrar' : 'Entrar'}
           loadingText="Entrando..."
           type="submit"
           disabled={isLoading}
         />
       </form>
+
+      {!isPlatform && (
+        <p className="text-center text-sm text-zinc-500">
+          Ainda não tem conta?{' '}
+          <Link to="/criar-conta" className="text-indigo-600 hover:text-indigo-700 font-medium">
+            Criar nova conta
+          </Link>
+        </p>
+      )}
 
       <p className="text-center text-xs text-zinc-400">
         {isPlatform ? (
