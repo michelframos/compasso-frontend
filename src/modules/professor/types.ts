@@ -482,6 +482,7 @@ export interface ParticipanteApresentacao {
   id_aluno: number
   nome: string | null
   meu_aluno: boolean
+  papel: string | null
   tamanho_figurino: string | null
   recebeu_figurino: boolean
   presenca_ensaio_geral: boolean

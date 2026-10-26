@@ -15,6 +15,7 @@ import {
   Layers,
   ClipboardList,
   ClipboardCheck,
+  Award,
   Star,
   Music,
   Shield,
@@ -22,6 +23,8 @@ import {
   TrendingUp,
   Wallet,
   CalendarClock,
+  CalendarOff,
+  CalendarPlus,
   Megaphone,
 } from 'lucide-react'
 import type { LayoutMenuItem } from './layoutTypes'
@@ -90,11 +93,14 @@ export const useMainLayout = () => {
     { icon: Megaphone, path: '/professor/avisos', label: 'Avisos', roles: ['professor'], somenteRoles: true },
     { icon: GraduationCap, path: '/turmas', label: 'Turmas', roles: ['admin', 'secretaria'] },
     { icon: ClipboardList, path: '/matriculas', label: 'Matrículas', roles: ['admin', 'secretaria'] },
+    { icon: Award, path: '/certificados', label: 'Certificados', roles: ['admin', 'secretaria'] },
+    { icon: CalendarOff, path: '/justificativas-faltas', label: 'Justificativas', roles: ['admin', 'secretaria', 'professor'] },
+    { icon: CalendarPlus, path: '/solicitacoes-reposicoes', label: 'Reposições', roles: ['admin', 'secretaria', 'professor'] },
     { icon: CalendarClock, path: '/solicitacoes-aulas', label: 'Solicitações de aula', roles: ['admin', 'secretaria'] },
     { icon: Megaphone, path: '/avisos', label: 'Avisos', roles: ['admin', 'secretaria'] },
     { icon: TrendingUp, path: '/progressoes', label: 'Progressões', roles: ['admin', 'secretaria'], modulo: 'progressao' },
     { icon: Star, path: '/espetaculos', label: 'Espetáculos', roles: ['admin', 'secretaria'], modulo: 'espetaculos' },
-    { icon: Mic2, path: '/apresentacoes', label: 'Apresentações', roles: ['admin', 'secretaria', 'aluno'], modulo: 'espetaculos' },
+    { icon: Mic2, path: '/apresentacoes', label: 'Apresentações', roles: ['admin', 'secretaria'], modulo: 'espetaculos' },
     { icon: Music, path: '/instrumentos', label: 'Instrumentos', roles: ['admin', 'secretaria'], modulo: 'instrumentos' },
     { icon: CreditCard, path: '/financeiro', label: 'Financeiro', roles: ['admin', 'secretaria'], modulo: 'financeiro' },
   ]

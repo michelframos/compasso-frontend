@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Users, Mail, Phone, Trash2, Edit, ChevronUp, ChevronDown, ChevronsUpDown, Search, User, AlertTriangle } from 'lucide-react';
+import { Plus, Users, Mail, Phone, Trash2, Edit, ChevronUp, ChevronDown, ChevronsUpDown, Search, User, AlertTriangle, KeyRound, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Card, CardContent } from '@/shared/components/ui/card';
@@ -19,7 +19,7 @@ import { NoData } from '@/shared/components/NoData';
 import { useAuthStore } from '@/shared/store/useAuthStore';
 
 export const AlunosPage: React.FC = () => {
-    const { alunos, pagination, isLoading, error, deleteAluno, fetchAlunos } = useAlunos();
+    const { alunos, pagination, isLoading, error, deleteAluno, fetchAlunos, enviarAcesso, enviandoAcessoId } = useAlunos();
     const navigate = useNavigate();
     const tenant = useAuthStore((s) => s.tenant);
     const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -200,6 +200,18 @@ export const AlunosPage: React.FC = () => {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
+                                                        title="Enviar acesso / redefinir senha"
+                                                        className="h-9 w-9 rounded-full text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 hover:cursor-pointer"
+                                                        onClick={() => enviarAcesso(aluno.id)}
+                                                        disabled={enviandoAcessoId === aluno.id}
+                                                    >
+                                                        {enviandoAcessoId === aluno.id
+                                                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                                                            : <KeyRound className="w-4 h-4" />}
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
                                                         className="h-9 w-9 rounded-full text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 hover:cursor-pointer"
                                                         onClick={() => handleOpenEdit(aluno)}
                                                     >
@@ -243,6 +255,18 @@ export const AlunosPage: React.FC = () => {
                                 ],
                                 buttons: (
                                     <>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-9 rounded-full border-zinc-200 text-xs font-bold px-4 gap-2 hover:cursor-pointer"
+                                            onClick={() => enviarAcesso(aluno.id)}
+                                            disabled={enviandoAcessoId === aluno.id}
+                                        >
+                                            {enviandoAcessoId === aluno.id
+                                                ? <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                                                : <KeyRound className="w-4 h-4 text-indigo-600" />}
+                                            Acesso
+                                        </Button>
                                         <Button
                                             variant="outline"
                                             size="sm"

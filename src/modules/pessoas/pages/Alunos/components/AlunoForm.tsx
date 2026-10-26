@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserCircle, GraduationCap, CalendarDays, Music, ReceiptText, Loader2, FileText, Search, X, Users } from 'lucide-react';
+import { UserCircle, GraduationCap, CalendarDays, Music, ReceiptText, Loader2, FileText, Search, X, Users, KeyRound } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
@@ -15,6 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Controller } from 'react-hook-form';
 import type { Aluno } from '../types';
 import { useHasModulo } from '@/shared/hooks/useHasModulo';
+import { toast } from 'sonner';
+import { getErrorMessage } from '@/shared/lib/utils';
+import { enviarAcessoResponsavel } from '../../../api/responsaveis';
 
 type AlunoTab = 'dados' | 'responsavel' | 'matriculas' | 'mensalidades' | 'agendamentos' | 'instrumentos' | 'contratos';
 
@@ -30,6 +33,8 @@ export const AlunoForm: React.FC<AlunoFormProps> = ({ onClose, onSuccess, aluno 
     const { register, formState: { errors }, setValue, control, watch } = form;
     const { responsaveis, fetchResponsaveis, isLoading: isLoadingResponsaveis } = useResponsaveis();
     const [searchTerm, setSearchTerm] = useState('');
+    const [enviandoAcesso, setEnviandoAcesso] = useState(false);
+    const idResponsavel = watch('id_responsavel');
     const isEditing = !!aluno;
     const hasFinanceiro = useHasModulo('financeiro');
     const hasInstrumentos = useHasModulo('instrumentos');
@@ -320,17 +325,40 @@ export const AlunoForm: React.FC<AlunoFormProps> = ({ onClose, onSuccess, aluno 
                                                 <p className="text-[11px] text-indigo-600 font-medium">Economize tempo selecionando um responsável já cadastrado.</p>
                                             </div>
                                         </div>
-                                        {watch('id_responsavel') && (
-                                            <Button 
-                                                type="button" 
-                                                variant="ghost" 
-                                                size="sm" 
-                                                onClick={clearResponsavel}
-                                                className="h-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50 gap-1.5 px-3 rounded-full font-bold"
-                                            >
-                                                <X className="w-3.5 h-3.5" />
-                                                Limpar Seleção
-                                            </Button>
+                                        {idResponsavel && (
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    disabled={enviandoAcesso}
+                                                    onClick={async () => {
+                                                        setEnviandoAcesso(true);
+                                                        try {
+                                                            const { message } = await enviarAcessoResponsavel(idResponsavel);
+                                                            toast.success(message);
+                                                        } catch (err: unknown) {
+                                                            toast.error(getErrorMessage(err, 'Não foi possível enviar o acesso ao responsável.'));
+                                                        } finally {
+                                                            setEnviandoAcesso(false);
+                                                        }
+                                                    }}
+                                                    className="h-8 text-indigo-700 hover:bg-indigo-100 gap-1.5 px-3 rounded-full font-bold"
+                                                >
+                                                    {enviandoAcesso ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <KeyRound className="w-3.5 h-3.5" />}
+                                                    Enviar acesso
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={clearResponsavel}
+                                                    className="h-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50 gap-1.5 px-3 rounded-full font-bold"
+                                                >
+                                                    <X className="w-3.5 h-3.5" />
+                                                    Limpar Seleção
+                                                </Button>
+                                            </div>
                                         )}
                                     </div>
 

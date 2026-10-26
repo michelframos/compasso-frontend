@@ -36,11 +36,13 @@ export const ApresentacaoParticipantes: React.FC<ApresentacaoParticipantesProps>
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [dataVencimento, setDataVencimento] = useState('');
   const [editValues, setEditValues] = useState<{
+    papel: string;
     tamanho_figurino: string;
     valor_figurino: number;
     pago_figurino: boolean;
     recebeu_figurino: boolean;
   }>({
+    papel: '',
     tamanho_figurino: '',
     valor_figurino: 0,
     pago_figurino: false,
@@ -95,6 +97,7 @@ export const ApresentacaoParticipantes: React.FC<ApresentacaoParticipantesProps>
   const startEdit = (p: ApresentacaoAluno) => {
     setEditingId(p.id);
     setEditValues({
+      papel: p.papel || '',
       tamanho_figurino: p.tamanho_figurino || '',
       valor_figurino: Number(p.valor_figurino) || 0,
       pago_figurino: !!p.pago_figurino,
@@ -232,6 +235,12 @@ export const ApresentacaoParticipantes: React.FC<ApresentacaoParticipantesProps>
                       isEditing ? (
                         <div className="flex items-center gap-2">
                           <Input
+                            className="w-24 h-8 text-xs px-2"
+                            placeholder="Papel"
+                            value={editValues.papel}
+                            onChange={e => setEditValues(prev => ({ ...prev, papel: e.target.value }))}
+                          />
+                          <Input
                             className="w-16 h-8 text-xs px-2"
                             placeholder="Tam"
                             value={editValues.tamanho_figurino}
@@ -246,6 +255,8 @@ export const ApresentacaoParticipantes: React.FC<ApresentacaoParticipantesProps>
                       ) : (
                         <div className="flex items-center gap-2 text-xs text-zinc-600">
                           <Shirt className="w-3.5 h-3.5 opacity-40" />
+                          <span className="font-bold">{participante.papel || 'Sem papel'}</span>
+                          <span className="text-zinc-300">|</span>
                           <span className="font-bold">{participante.tamanho_figurino || '-'}</span>
                           <span className="text-zinc-300">|</span>
                           <span className="font-medium">
@@ -417,6 +428,12 @@ export const ApresentacaoParticipantes: React.FC<ApresentacaoParticipantesProps>
                         <div className="flex flex-col gap-2">
                           <Input
                             className="h-8 text-xs bg-white"
+                            placeholder="Papel"
+                            value={editValues.papel}
+                            onChange={e => setEditValues(prev => ({ ...prev, papel: e.target.value }))}
+                          />
+                          <Input
+                            className="h-8 text-xs bg-white"
                             placeholder="Tam"
                             value={editValues.tamanho_figurino}
                             onChange={e => setEditValues(prev => ({ ...prev, tamanho_figurino: e.target.value }))}
@@ -430,6 +447,8 @@ export const ApresentacaoParticipantes: React.FC<ApresentacaoParticipantesProps>
                       ) : (
                         <div className="flex items-center gap-2 text-xs font-semibold text-zinc-700">
                           <Shirt className="w-3.5 h-3.5 text-zinc-400" />
+                          <span>{participante.papel || 'Sem papel'}</span>
+                          <span className="text-zinc-300">|</span>
                           <span>{participante.tamanho_figurino || '-'}</span>
                           <span className="text-zinc-300">|</span>
                           <span>

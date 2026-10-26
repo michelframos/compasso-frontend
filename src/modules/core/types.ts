@@ -109,6 +109,9 @@ export interface ConfiguracaoEmpresa {
   cep: string | null
   id_estado: number | null
   id_cidade: number | null
+  permitir_aluno_editar_medidas?: boolean
+  limite_reposicoes_periodo?: number | null
+  prazo_reposicao_dias?: number | null
   estado?: { id: number; nome: string; sigla: string }
   cidade?: { id: number; nome: string }
 }
@@ -124,6 +127,9 @@ export interface ConfiguracaoEmpresaFormData {
   cep: string | null
   id_estado: string | null
   id_cidade: string | null
+  permitir_aluno_editar_medidas?: boolean
+  limite_reposicoes_periodo?: number | string | null
+  prazo_reposicao_dias?: number | string | null
 }
 
 export interface Perfil {

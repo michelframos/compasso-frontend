@@ -2,6 +2,7 @@ import React from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { Loader2, MapPin, Save, UserRound } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
 import type { Cidade, Estado } from '@/modules/core/api/localidades'
@@ -13,6 +14,9 @@ interface DadosPessoaisFormProps {
   form: UseFormReturn<PerfilFormData>
   onSalvar: () => void
   isSaving: boolean
+  email: string
+  cpf: string | null
+  travarIdentidade: boolean
   estados: Estado[]
   cidades: Cidade[]
   estadoSelecionado: string
@@ -35,6 +39,9 @@ export const DadosPessoaisForm: React.FC<DadosPessoaisFormProps> = ({
   form,
   onSalvar,
   isSaving,
+  email,
+  cpf,
+  travarIdentidade,
   estados,
   cidades,
   estadoSelecionado,
@@ -58,11 +65,23 @@ export const DadosPessoaisForm: React.FC<DadosPessoaisFormProps> = ({
             icone={<UserRound className="w-4 h-4 text-indigo-600" />}
             cor="bg-indigo-100"
             titulo="Dados pessoais"
-            descricao="E-mail e CPF são alterados pela secretaria da escola."
+            descricao={
+              travarIdentidade
+                ? 'Nome, data de nascimento, e-mail e CPF são alterados pela secretaria.'
+                : 'E-mail e CPF são alterados pela secretaria da escola.'
+            }
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <CampoPerfil id="nome" label="Nome completo *" registro={register('nome')} erro={errors.nome} disabled={isSaving} className="md:col-span-2" />
-            <CampoPerfil id="data_aniversario" label="Data de nascimento" type="date" registro={register('data_aniversario')} erro={errors.data_aniversario} disabled={isSaving} />
+            <CampoPerfil id="nome" label="Nome completo *" registro={register('nome')} erro={errors.nome} disabled={isSaving || travarIdentidade} className="md:col-span-2" />
+            <CampoPerfil id="data_aniversario" label="Data de nascimento" type="date" registro={register('data_aniversario')} erro={errors.data_aniversario} disabled={isSaving || travarIdentidade} />
+            <div className="space-y-2">
+              <Label htmlFor="email" className="ml-1 font-medium text-zinc-700">E-mail</Label>
+              <Input id="email" value={email} disabled className="h-11 rounded-xl border-zinc-200" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cpf" className="ml-1 font-medium text-zinc-700">CPF</Label>
+              <Input id="cpf" value={cpf ?? ''} disabled placeholder="Não informado" className="h-11 rounded-xl border-zinc-200" />
+            </div>
             <CampoPerfil id="telefone" label="Telefone" type="tel" inputMode="tel" placeholder="(00) 0000-0000" registro={register('telefone')} erro={errors.telefone} disabled={isSaving} />
             <CampoPerfil id="whatsapp" label="WhatsApp" type="tel" inputMode="tel" placeholder="(00) 00000-0000" registro={register('whatsapp')} erro={errors.whatsapp} disabled={isSaving} />
           </div>

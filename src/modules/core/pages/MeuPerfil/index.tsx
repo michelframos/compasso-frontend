@@ -44,6 +44,9 @@ export const MeuPerfilPage: React.FC = () => {
             form={form}
             onSalvar={salvar}
             isSaving={isSaving}
+            email={perfil.email}
+            cpf={perfil.cpf}
+            travarIdentidade={perfil.role === 'aluno' || perfil.role === 'responsavel'}
             estados={estados}
             cidades={cidades}
             estadoSelecionado={estadoSelecionado}

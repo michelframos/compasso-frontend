@@ -186,6 +186,19 @@ export const EmprestimoModal: React.FC<EmprestimoModalProps> = ({ onClose, onSuc
                   {errors.data_emprestimo && <p className="text-[11px] text-rose-500 ml-1">{errors.data_emprestimo.message}</p>}
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="data_prevista_devolucao" className="text-zinc-700 font-medium ml-1">Devolução prevista</Label>
+                  <div className="relative">
+                    <Input
+                      id="data_prevista_devolucao"
+                      type="date"
+                      {...register('data_prevista_devolucao')}
+                      className="h-11 rounded-xl focus-visible:ring-indigo-600 border-zinc-200"
+                    />
+                    <CalendarDays className="absolute right-3 top-3 w-5 h-5 text-zinc-400" />
+                  </div>
+                </div>
+
                 {/* Contrato */}
                 {hasFinanceiro && (
                 <div className="space-y-2">

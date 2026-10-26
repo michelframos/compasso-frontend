@@ -45,6 +45,9 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
             cep: '',
             id_estado: '',
             id_cidade: '',
+            permitir_aluno_editar_medidas: false,
+            limite_reposicoes_periodo: '',
+            prazo_reposicao_dias: '',
         },
     });
 
@@ -112,12 +115,23 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
                 cep: config.cep || '',
                 id_estado: config.id_estado?.toString() || '',
                 id_cidade: config.id_cidade?.toString() || '',
+                permitir_aluno_editar_medidas: Boolean(config.permitir_aluno_editar_medidas),
+                limite_reposicoes_periodo: config.limite_reposicoes_periodo ?? '',
+                prazo_reposicao_dias: config.prazo_reposicao_dias ?? '',
             });
         }
     }, [config, reset]);
 
     const onSubmit = (data: ConfiguracaoEmpresaFormData) => {
-        salvarConfig(data);
+        const numero = (valor: number | string | null | undefined) => {
+            if (valor === '' || valor === null || valor === undefined) return null
+            return Number(valor)
+        }
+        salvarConfig({
+            ...data,
+            limite_reposicoes_periodo: numero(data.limite_reposicoes_periodo),
+            prazo_reposicao_dias: numero(data.prazo_reposicao_dias),
+        });
     };
 
     if (isLoading) {
@@ -315,6 +329,49 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
+                </div>
+
+                <label className="flex items-start gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                    <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-600"
+                        {...register('permitir_aluno_editar_medidas')}
+                    />
+                    <span>
+                        <span className="block text-sm font-bold text-zinc-900">Aluno pode editar as medidas</span>
+                        <span className="mt-0.5 block text-xs text-zinc-500">
+                            Quando ligado, o aluno e o responsável corrigem tórax, cintura, quadril e altura.
+                        </span>
+                    </span>
+                </label>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="limite_reposicoes_periodo" className="text-zinc-700 font-medium ml-1">Reposições por mês</Label>
+                        <Input
+                            id="limite_reposicoes_periodo"
+                            type="number"
+                            min={0}
+                            max={99}
+                            placeholder="Sem limite"
+                            className="h-11 rounded-xl border-zinc-200"
+                            {...register('limite_reposicoes_periodo')}
+                        />
+                        <p className="text-xs text-zinc-500 ml-1">Pedidos pendentes e aprovados do aluno no mês. Vazio não limita.</p>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="prazo_reposicao_dias" className="text-zinc-700 font-medium ml-1">Prazo após a falta (dias)</Label>
+                        <Input
+                            id="prazo_reposicao_dias"
+                            type="number"
+                            min={0}
+                            max={365}
+                            placeholder="Sem prazo"
+                            className="h-11 rounded-xl border-zinc-200"
+                            {...register('prazo_reposicao_dias')}
+                        />
+                        <p className="text-xs text-zinc-500 ml-1">Dias depois da aula perdida para pedir reposição. Vazio não limita.</p>
                     </div>
                 </div>
             </div>

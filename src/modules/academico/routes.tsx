@@ -28,6 +28,24 @@ export const academicoRoutes: RouteObject[] = [
     handle: { title: 'Progressões de nível' },
   },
   {
+    path: 'justificativas-faltas',
+    element: (
+      <RoleProtectedRoute roles={['admin', 'secretaria', 'professor']}>
+        {lazyRoute(() => import('./pages/JustificativasFaltas'), 'JustificativasFaltasPage')}
+      </RoleProtectedRoute>
+    ),
+    handle: { title: 'Justificativas' },
+  },
+  {
+    path: 'solicitacoes-reposicoes',
+    element: (
+      <RoleProtectedRoute roles={['admin', 'secretaria', 'professor']}>
+        {lazyRoute(() => import('./pages/SolicitacoesReposicoes'), 'SolicitacoesReposicoesPage')}
+      </RoleProtectedRoute>
+    ),
+    handle: { title: 'Reposições' },
+  },
+  {
     path: 'solicitacoes-aulas',
     element: (
       <RoleProtectedRoute roles={['admin', 'secretaria']}>
@@ -44,6 +62,15 @@ export const academicoRoutes: RouteObject[] = [
       </RoleProtectedRoute>
     ),
     handle: { title: 'Avisos' },
+  },
+  {
+    path: 'certificados',
+    element: (
+      <RoleProtectedRoute roles={['admin', 'secretaria']}>
+        {lazyRoute(() => import('./pages/Certificados'), 'CertificadosPage')}
+      </RoleProtectedRoute>
+    ),
+    handle: { title: 'Certificados' },
   },
   {
     path: 'matriculas',

@@ -5,6 +5,7 @@ export interface ApresentacaoAluno {
   id: number;
   id_apresentacao: number;
   id_aluno: number;
+  papel: string | null;
   tamanho_figurino: string | null;
   valor_figurino: number | null;
   pago_figurino: boolean;
