@@ -42,7 +42,9 @@ export const NivelForm: React.FC<NivelFormProps> = ({ onClose, onSuccess, nivel 
 
   const { form, onSubmit, isLoading } = useNivelForm(onSuccess, nivel);
 
-  const { register, formState: { errors } } = form;
+  const { register, watch, setValue, formState: { errors } } = form;
+  const corIdentificacao = watch('cor_identificacao') || '';
+  const corPickerValue = /^#[0-9A-Fa-f]{6}$/.test(corIdentificacao) ? corIdentificacao : '#000000';
 
   const [cursos, setCursos] = useState<CursoOption[]>([]);
 
@@ -232,7 +234,9 @@ export const NivelForm: React.FC<NivelFormProps> = ({ onClose, onSuccess, nivel 
 
                   type="color"
 
-                  {...register('cor_identificacao')}
+                  value={corPickerValue}
+
+                  onChange={(e) => setValue('cor_identificacao', e.target.value.toUpperCase(), { shouldDirty: true, shouldValidate: true })}
 
                   className="w-16 h-11 p-1 rounded-xl cursor-pointer"
 

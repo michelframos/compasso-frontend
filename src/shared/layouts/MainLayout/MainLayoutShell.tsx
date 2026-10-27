@@ -69,10 +69,10 @@ export const MainLayoutShell: React.FC<MainLayoutShellProps> = ({ layout, childr
     <div className="flex h-screen bg-zinc-50 overflow-hidden print:h-auto print:overflow-visible print:block">
       <aside
         className={`${isCollapsed ? 'w-16' : 'w-64'
-          } hidden md:flex bg-white border-r border-zinc-200 flex-col transition-all duration-300 ease-in-out z-20 relative shadow-sm print:hidden`}
+          } hidden md:flex bg-white border-r border-zinc-200 flex-col transition-all duration-300 ease-in-out z-20 relative shadow-sm print:hidden h-full min-h-0`}
       >
-        <div className={`py-6 flex flex-col flex-1 overflow-y-auto custom-scrollbar ${isCollapsed ? 'items-center overflow-x-hidden' : 'items-stretch px-4'}`}>
-          <div className={`flex items-center mb-10 shrink-0 ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
+        <div className={`py-6 flex flex-col flex-1 min-h-0 ${isCollapsed ? 'items-center overflow-x-hidden px-0' : 'items-stretch px-4'}`}>
+          <div className={`flex items-center mb-6 shrink-0 ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
             <Link to={homePath} className="p-2 bg-indigo-600 rounded-full text-white shadow-lg shadow-indigo-100 flex items-center justify-center shrink-0">
               <Music2 className="w-6 h-6" />
             </Link>
@@ -81,7 +81,7 @@ export const MainLayoutShell: React.FC<MainLayoutShellProps> = ({ layout, childr
             )}
           </div>
 
-          <nav className="flex-1 flex flex-col gap-1.5">
+          <nav className="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pr-0.5">
             {menuItems.map((item) => (
               <Link
                 key={item.path}
@@ -106,7 +106,7 @@ export const MainLayoutShell: React.FC<MainLayoutShellProps> = ({ layout, childr
             ))}
           </nav>
 
-          <div className="flex flex-col gap-1.5 pt-4 border-t border-zinc-100 shrink-0">
+          <div className="flex flex-col gap-1.5 pt-4 mt-2 border-t border-zinc-100 shrink-0">
             {bottomMenuItems.map((item) => (
               <Link
                 key={item.path}

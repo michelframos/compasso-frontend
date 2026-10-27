@@ -88,11 +88,11 @@ export const useMatriculaAgendamentos = (turmaId: number | undefined, alunoId: n
 
             const sorted = [...data].sort((a: AulaTurmaAgendamento, b: AulaTurmaAgendamento) => {
 
-                const dateCompare = b.data.localeCompare(a.data);
+                const dateCompare = a.data.localeCompare(b.data);
 
                 if (dateCompare !== 0) return dateCompare;
 
-                return b.hora_inicio.localeCompare(a.hora_inicio);
+                return a.hora_inicio.localeCompare(b.hora_inicio);
 
             });
 

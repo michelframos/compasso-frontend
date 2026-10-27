@@ -813,13 +813,12 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
 
 
-    // Carrega todos os alunos ativos para agendamento avulso
+    // Carrega todos os alunos ativos só para agendamento avulso (sem turma).
 
     useEffect(() => {
 
         if (ehProfessor) return;
-
-
+        if (defaultTurmaId || (initialData?.id_turma && initialData.id_turma !== 0)) return;
 
         const fetchTodosAlunos = async () => {
 
@@ -845,7 +844,7 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
         fetchTodosAlunos();
 
-    }, [ehProfessor]);
+    }, [ehProfessor, defaultTurmaId, initialData?.id_turma]);
 
 
 
@@ -1068,43 +1067,27 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
 
 
-    // Effect 2: Carrega alunos da turma ou todos os alunos se não houver turma
+    // Effect 2: Com turma, só alunos matriculados nela; sem turma (avulso), todos os ativos.
 
     useEffect(() => {
 
         if (idTurma && idTurma !== 0) {
 
-            // Para reposição/reforço: mostra todos os alunos ativos do sistema
+            if (!turmaDetalhes) return;
 
-            if (tipoAula === 'reposicao' || tipoAula === 'reforco') {
+            const alunosDaTurma: AlunoBasico[] = turmaDetalhes.matriculas
 
-                setAlunos(todosAlunos);
+                ?.filter((m: { aluno?: AlunoBasico | null; status?: string }) => !m.status || m.status === 'ativa')
 
-                if (initialData?.id_aluno_especifico) {
+                .map((m: { aluno?: AlunoBasico | null; status?: string }) => m.aluno)
 
-                    setValue('id_aluno_especifico', Number(initialData.id_aluno_especifico));
+                .filter((aluno): aluno is AlunoBasico => Boolean(aluno)) || [];
 
-                }
+            setAlunos(alunosDaTurma);
 
-            } else if (turmaDetalhes) {
+            if (initialData?.id_aluno_especifico) {
 
-                // Para aulas regulares/extras: mostra apenas os alunos da turma
-
-                const alunosDaTurma: AlunoBasico[] = turmaDetalhes.matriculas
-
-                    ?.map((m: any) => m.aluno)
-
-                    .filter(Boolean) || [];
-
-                setAlunos(alunosDaTurma);
-
-
-
-                if (initialData?.id_aluno_especifico) {
-
-                    setValue('id_aluno_especifico', Number(initialData.id_aluno_especifico));
-
-                }
+                setValue('id_aluno_especifico', Number(initialData.id_aluno_especifico));
 
             }
 
@@ -1120,7 +1103,7 @@ export const AulaForm: React.FC<AulaFormProps> = ({
 
         }
 
-    }, [tipoAula, turmaDetalhes, idTurma, todosAlunos, initialData?.id_aluno_especifico, setValue]);
+    }, [turmaDetalhes, idTurma, todosAlunos, initialData?.id_aluno_especifico, setValue]);
 
 
 

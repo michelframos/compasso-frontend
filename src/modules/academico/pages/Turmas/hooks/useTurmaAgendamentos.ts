@@ -53,11 +53,11 @@ export const useTurmaAgendamentos = (turmaId: number | undefined) => {
                 params: { id_turma: turmaId }
             });
             const data = response.data?.data ?? response.data ?? [];
-            // Ordenar por data desc, depois hora_inicio desc
+            // Ordenar por data asc, depois hora_inicio asc
             const sorted = [...data].sort((a: AulaAgendamento, b: AulaAgendamento) => {
-                const dateCompare = b.data.localeCompare(a.data);
+                const dateCompare = a.data.localeCompare(b.data);
                 if (dateCompare !== 0) return dateCompare;
-                return b.hora_inicio.localeCompare(a.hora_inicio);
+                return a.hora_inicio.localeCompare(b.hora_inicio);
             });
             setAgendamentos(sorted);
         } catch (error) {
