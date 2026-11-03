@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/shared/store/useAuthStore'
 import { alterarSenha, logout } from '@/modules/core/api/auth'
-import { getHomePath } from '@/shared/lib/homePath'
+import { getHomePath, getLoginPath } from '@/shared/lib/homePath'
 import { getErrorMessage } from '@/shared/lib/utils'
 
 const trocarSenhaSchema = z.object({
@@ -38,9 +38,9 @@ export const useTrocarSenha = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login', { replace: true })
+      navigate(getLoginPath(user?.role), { replace: true })
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate, user?.role])
 
   const onSubmit = async (values: TrocarSenhaValues) => {
     setIsLoading(true)
@@ -58,13 +58,14 @@ export const useTrocarSenha = () => {
   }
 
   const handleSair = async () => {
+    const loginPath = getLoginPath(user?.role)
     try {
       await logout()
     } catch {
       // Estado local é limpo mesmo se a requisição falhar
     } finally {
       clearAuth()
-      navigate('/login', { replace: true })
+      navigate(loginPath, { replace: true })
     }
   }
 

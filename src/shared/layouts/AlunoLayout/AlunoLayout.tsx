@@ -47,7 +47,7 @@ export const AlunoLayout: React.FC = () => {
     ...(financeiro ? [{ to: '/aluno/financeiro', icon: Wallet, label: 'Financeiro' }] : []),
     ...(espetaculos
       ? [
-          { to: '/aluno/apresentacoes', icon: Music, label: 'Peças' },
+          { to: '/aluno/apresentacoes', icon: Music, label: 'Apresentações' },
           { to: '/aluno/medidas', icon: Ruler, label: 'Medidas' },
         ]
       : []),
@@ -64,7 +64,7 @@ export const AlunoLayout: React.FC = () => {
       // A sessão local é encerrada mesmo se a rede falhar.
     } finally {
       clearAuth()
-      navigate('/login', { replace: true })
+      navigate('/aluno/login', { replace: true })
     }
   }
 
@@ -169,12 +169,12 @@ export const AlunoLayout: React.FC = () => {
         <OfflineBanner />
         <PwaInstallPrompt />
 
-        <main className="mx-auto w-full max-w-lg flex-1 min-h-0 overflow-y-auto px-4 py-5 pb-24 md:max-w-3xl md:pb-5">
+        <main className="w-full flex-1 min-h-0 overflow-y-auto px-4 py-5 pb-24 md:px-6 md:pb-5">
           {pronto ? <Outlet /> : <p className="py-16 text-center text-sm text-zinc-400">Carregando...</p>}
         </main>
 
         <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-zinc-200 bg-white md:hidden">
-          <ul className="mx-auto flex max-w-lg overflow-x-auto">
+          <ul className="flex w-full overflow-x-auto">
             {itens.map((item) => (
               <li key={item.to} className="shrink-0 min-w-[4.5rem]">
                 <NavLink

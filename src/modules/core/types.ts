@@ -69,8 +69,9 @@ export interface SwitchInstituicaoResponse {
 
 export interface LoginErrorResponse {
   message?: string
-  code?: 'activation_required' | 'already_activated' | string
+  code?: 'activation_required' | 'already_activated' | 'needs_tenant_selection' | string
   errors?: Record<string, string[]>
+  tenants?: Instituicao[] | { data: Instituicao[] }
 }
 
 /** State de navegação enviado ao /login logo após o cadastro da escola. */

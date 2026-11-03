@@ -4,9 +4,13 @@ import { useAuthStore } from '@/shared/store/useAuthStore'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
+  loginPath?: string
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  loginPath = '/login',
+}) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const tenant = useAuthStore((state) => state.tenant)
   const tenants = useAuthStore((state) => state.tenants)
@@ -14,7 +18,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const impersonation = useAuthStore((state) => state.impersonation)
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
+    return <Navigate to={loginPath} replace />
   }
 
   if (user?.deve_trocar_senha) {

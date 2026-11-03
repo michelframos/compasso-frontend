@@ -290,12 +290,14 @@ export interface InstrumentosDoAluno {
   historico: HistoricoInstrumento[]
 }
 
+export type TipoContratoDoAluno = 'avulso' | 'matricula' | 'instrumento' | 'espetaculo'
+
 export interface ContratoDoAluno {
+  tipo: TipoContratoDoAluno
   id: number
   nome: string | null
+  descricao: string | null
   contrato_gerado: string | null
-  aceito: boolean
-  aceito_em: string | null
 }
 
 export interface CertificadoDoAluno {

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/shared/lib/utils'
-import { aceitarContrato, baixarContrato, listarContratos } from '../../../api/contratos'
+import { baixarContrato, listarContratos } from '../../../api/contratos'
 import { useAlunoAtivo } from '../../../hooks/useAlunoAtivo'
-import type { ContratoDoAluno } from '../../../types'
+import type { ContratoDoAluno, TipoContratoDoAluno } from '../../../types'
 
 function abrirPdf(blob: Blob) {
   const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
@@ -35,8 +35,7 @@ export function useMeusContratos() {
   const aguardandoDependente = role === 'responsavel' && !idAluno
   const [contratos, setContratos] = useState<ContratoDoAluno[]>([])
   const [isLoading, setIsLoading] = useState(!aguardandoDependente)
-  const [aceitandoId, setAceitandoId] = useState<number | null>(null)
-  const [baixandoId, setBaixandoId] = useState<number | null>(null)
+  const [baixandoChave, setBaixandoChave] = useState<string | null>(null)
 
   useEffect(() => {
     if (aguardandoDependente) {
@@ -63,29 +62,17 @@ export function useMeusContratos() {
     }
   }, [aguardandoDependente, params.id_aluno])
 
-  const aceitar = async (id: number) => {
-    setAceitandoId(id)
+  const baixar = async (tipo: TipoContratoDoAluno, id: number) => {
+    const chave = `${tipo}-${id}`
+    setBaixandoChave(chave)
     try {
-      const aceito = await aceitarContrato(id, params.id_aluno)
-      setContratos((lista) => lista.map((item) => (item.id === aceito.id ? aceito : item)))
-      toast.success('Contrato aceito.')
-    } catch (erro) {
-      toast.error(getErrorMessage(erro, 'Não foi possível aceitar o contrato.'))
-    } finally {
-      setAceitandoId(null)
-    }
-  }
-
-  const baixar = async (id: number) => {
-    setBaixandoId(id)
-    try {
-      abrirPdf(await baixarContrato(id, params.id_aluno))
+      abrirPdf(await baixarContrato(tipo, id, params.id_aluno))
     } catch (erro) {
       await erroDoBlob(erro, 'Não foi possível baixar o contrato.')
     } finally {
-      setBaixandoId(null)
+      setBaixandoChave(null)
     }
   }
 
-  return { contratos, isLoading, aguardandoDependente, aceitandoId, baixandoId, aceitar, baixar }
+  return { contratos, isLoading, aguardandoDependente, baixandoChave, baixar }
 }

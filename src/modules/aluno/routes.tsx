@@ -8,8 +8,8 @@ import { AlunoLayout } from '@/shared/layouts/AlunoLayout'
 export const alunoAreaRoute: RouteObject = {
   path: '/aluno',
   element: (
-    <ProtectedRoute>
-      <RoleProtectedRoute roles={['aluno', 'responsavel']}>
+    <ProtectedRoute loginPath="/aluno/login">
+      <RoleProtectedRoute roles={['aluno', 'responsavel']} loginPath="/aluno/login">
         <AlunoLayout />
       </RoleProtectedRoute>
     </ProtectedRoute>

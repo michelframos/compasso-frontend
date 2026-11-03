@@ -5,7 +5,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Link } from 'react-router-dom'
 
 export const SelecionarInstituicaoPage: React.FC = () => {
-  const { tenants, error, loadingSlug, handleSelect } = useSelecionarInstituicao()
+  const { tenants, error, loadingSlug, handleSelect, userIsAluno } = useSelecionarInstituicao()
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-zinc-50 p-6">
@@ -54,7 +54,10 @@ export const SelecionarInstituicaoPage: React.FC = () => {
         </div>
 
         <p className="text-center text-sm text-zinc-500">
-          <Link to="/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
+          <Link
+            to={userIsAluno ? '/aluno/login' : '/login'}
+            className="text-indigo-600 hover:text-indigo-700 font-medium"
+          >
             Voltar ao login
           </Link>
         </p>

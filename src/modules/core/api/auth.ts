@@ -34,6 +34,12 @@ export type PlatformLoginPayload = {
   password: string
 }
 
+export type AlunoLoginPayload = {
+  email: string
+  password: string
+  tenant_slug?: string
+}
+
 export function normalizeInstituicoes(
   tenants?: Instituicao[] | { data: Instituicao[] } | null,
 ): Instituicao[] {
@@ -73,6 +79,16 @@ export async function platformLogin(payload: PlatformLoginPayload) {
   const { data } = await api.post<AuthResponse>('/platform/login', {
     email: payload.email,
     password: payload.password,
+  })
+
+  return data
+}
+
+export async function alunoLogin(payload: AlunoLoginPayload) {
+  const { data } = await api.post<AuthResponse>('/aluno/login', {
+    email: payload.email,
+    password: payload.password,
+    ...(payload.tenant_slug ? { tenant_slug: payload.tenant_slug } : {}),
   })
 
   return data
