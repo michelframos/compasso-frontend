@@ -3,12 +3,14 @@ export interface Curso {
   nome: string;
   descricao: string | null;
   contrato_id: number | null;
+  id_template_certificado: number | null;
 }
 
 export interface CursoFormData {
   nome: string;
   descricao: string;
   contrato_id?: number | null;
+  id_template_certificado?: number | null;
 }
 
 export interface PaginationMeta {

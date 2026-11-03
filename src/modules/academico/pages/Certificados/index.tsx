@@ -1,7 +1,8 @@
-import React from 'react'
-import { Award, Check } from 'lucide-react'
+import React, { useState } from 'react'
+import { Award, Check, FileText } from 'lucide-react'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { useCertificados } from './hooks/useCertificados'
+import { TemplatesCertificadosPanel } from './components/TemplatesCertificadosPanel'
 
 function nomeAluno(aluno: { usuario?: { nome?: string } | null; nome?: string } | null | undefined) {
   return aluno?.usuario?.nome ?? aluno?.nome ?? 'Aluno'
@@ -12,8 +13,11 @@ function carga(valor: number | null) {
   return `${valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} h`
 }
 
+type Aba = 'emitir' | 'templates'
+
 export const CertificadosPage: React.FC = () => {
   const { certificados, elegiveis, isLoading, emitindoId, emitir } = useCertificados()
+  const [aba, setAba] = useState<Aba>('emitir')
 
   return (
     <div className="space-y-6">
@@ -22,11 +26,40 @@ export const CertificadosPage: React.FC = () => {
           Certificados de <span className="text-indigo-600">conclusão</span>
         </h1>
         <p className="mt-1 text-[14px] text-zinc-500">
-          Emita para matrículas completadas com pelo menos 75% de presença. O aluno baixa o PDF na área dele.
+          Emita para matrículas completadas com pelo menos 75% de presença e personalize os templates.
         </p>
       </div>
 
-      {isLoading ? (
+      <div className="flex items-center gap-1 border-b border-zinc-100">
+        <button
+          type="button"
+          onClick={() => setAba('emitir')}
+          className={`px-4 py-2 text-sm font-bold border-b-2 transition-all flex items-center gap-2 hover:cursor-pointer ${
+            aba === 'emitir'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-zinc-400 hover:text-zinc-600'
+          }`}
+        >
+          <Check className="w-4 h-4" />
+          Emitir
+        </button>
+        <button
+          type="button"
+          onClick={() => setAba('templates')}
+          className={`px-4 py-2 text-sm font-bold border-b-2 transition-all flex items-center gap-2 hover:cursor-pointer ${
+            aba === 'templates'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-zinc-400 hover:text-zinc-600'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          Templates
+        </button>
+      </div>
+
+      {aba === 'templates' ? (
+        <TemplatesCertificadosPanel />
+      ) : isLoading ? (
         <div className="flex items-center justify-center py-20">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
         </div>

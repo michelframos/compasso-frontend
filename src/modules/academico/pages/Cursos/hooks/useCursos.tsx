@@ -132,7 +132,7 @@ export const useCursos = () => {
 
     setSelectedCurso(undefined);
 
-    form.reset({ nome: '', descricao: '', contrato_id: null });
+    form.reset({ nome: '', descricao: '', contrato_id: null, id_template_certificado: null });
 
     setIsFormOpen(true);
 
@@ -144,7 +144,12 @@ export const useCursos = () => {
 
     setSelectedCurso(curso);
 
-    form.reset({ nome: curso.nome, descricao: curso.descricao || '', contrato_id: curso.contrato_id || null });
+    form.reset({
+      nome: curso.nome,
+      descricao: curso.descricao || '',
+      contrato_id: curso.contrato_id || null,
+      id_template_certificado: curso.id_template_certificado ?? null,
+    });
 
     setIsFormOpen(true);
 
@@ -238,11 +243,13 @@ export const useCursos = () => {
 
           contrato_id: selectedCurso.contrato_id || null,
 
+          id_template_certificado: selectedCurso.id_template_certificado ?? null,
+
         });
 
       } else {
 
-        form.reset({ nome: '', descricao: '', contrato_id: null });
+        form.reset({ nome: '', descricao: '', contrato_id: null, id_template_certificado: null });
 
       }
 

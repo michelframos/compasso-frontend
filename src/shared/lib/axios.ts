@@ -21,6 +21,17 @@ api.interceptors.request.use((config) => {
     config.headers['X-Tenant-Slug'] = tenant.slug;
   }
 
+  // Com Content-Type application/json padrão, o axios serializa FormData como JSON
+  // e o upload quebra. Remover deixa o browser definir multipart + boundary.
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    const headers = config.headers
+    if (headers && typeof headers.delete === 'function') {
+      headers.delete('Content-Type')
+    } else if (headers) {
+      delete (headers as Record<string, unknown>)['Content-Type']
+    }
+  }
+
   return config;
 });
 

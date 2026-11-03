@@ -22,6 +22,8 @@ const cursoSchema = z.object({
 
   contrato_id: z.coerce.number().optional().nullable(),
 
+  id_template_certificado: z.coerce.number().optional().nullable(),
+
 });
 
 
@@ -43,6 +45,8 @@ export const useCursoForm = (onSuccess: (id?: number) => void, initialData?: Cur
       descricao: initialData?.descricao || '',
 
       contrato_id: initialData?.contrato_id || null,
+
+      id_template_certificado: initialData?.id_template_certificado ?? null,
 
     },
 
