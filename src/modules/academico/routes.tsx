@@ -73,6 +73,24 @@ export const academicoRoutes: RouteObject[] = [
     handle: { title: 'Certificados' },
   },
   {
+    path: 'certificados/templates/novo',
+    element: (
+      <RoleProtectedRoute roles={['admin', 'secretaria']}>
+        {lazyRoute(() => import('./pages/Certificados/TemplateCertificadoFormPage'), 'TemplateCertificadoFormPage')}
+      </RoleProtectedRoute>
+    ),
+    handle: { title: 'Novo template' },
+  },
+  {
+    path: 'certificados/templates/:id',
+    element: (
+      <RoleProtectedRoute roles={['admin', 'secretaria']}>
+        {lazyRoute(() => import('./pages/Certificados/TemplateCertificadoFormPage'), 'TemplateCertificadoFormPage')}
+      </RoleProtectedRoute>
+    ),
+    handle: { title: 'Editar template' },
+  },
+  {
     path: 'matriculas',
     element: lazyRoute(() => import('./pages/Matriculas'), 'MatriculasPage'),
     handle: { title: 'Matrículas' },

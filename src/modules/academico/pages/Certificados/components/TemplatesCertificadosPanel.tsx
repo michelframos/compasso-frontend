@@ -1,35 +1,16 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Award, Edit, FileText, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { ConfirmDeleteDialog } from '@/shared/components/ConfirmDeleteDialog'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/shared/components/ui/dialog'
 import { urlArquivoPublico } from '@/shared/lib/storageUrl'
-import type { TemplateCertificado } from '../../../api/templatesCertificados'
 import { useTemplatesCertificados } from '../hooks/useTemplatesCertificados'
-import { TemplateCertificadoForm } from './TemplateCertificadoForm'
 
 export const TemplatesCertificadosPanel: React.FC = () => {
-  const { templates, isLoading, salvando, salvar, excluir } = useTemplatesCertificados()
-  const [aberto, setAberto] = useState(false)
-  const [editando, setEditando] = useState<TemplateCertificado | null>(null)
+  const navigate = useNavigate()
+  const { templates, isLoading, excluir } = useTemplatesCertificados()
   const [excluindoId, setExcluindoId] = useState<number | null>(null)
-
-  const abrirNovo = () => {
-    setEditando(null)
-    setAberto(true)
-  }
-
-  const abrirEdicao = (template: TemplateCertificado) => {
-    setEditando(template)
-    setAberto(true)
-  }
 
   return (
     <div className="space-y-4">
@@ -42,8 +23,8 @@ export const TemplatesCertificadosPanel: React.FC = () => {
         </div>
         <Button
           type="button"
-          onClick={abrirNovo}
-          className="rounded-full h-9 px-4 gap-2 bg-indigo-600 hover:bg-indigo-700 font-bold"
+          onClick={() => navigate('/certificados/templates/novo')}
+          className="h-9 gap-2 rounded-full bg-indigo-600 px-4 font-bold hover:bg-indigo-700"
         >
           <Plus className="h-4 w-4" />
           Novo template
@@ -69,16 +50,16 @@ export const TemplatesCertificadosPanel: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {templates.map((template) => (
-            <Card key={template.id} className="border-zinc-200 shadow-none overflow-hidden">
+            <Card key={template.id} className="overflow-hidden border-zinc-200 shadow-none">
               <CardContent className="p-0">
                 {urlArquivoPublico(template.fundo_url ?? template.fundo_path) ? (
                   <img
                     src={urlArquivoPublico(template.fundo_url ?? template.fundo_path) ?? undefined}
                     alt=""
-                    className="h-28 w-full object-cover border-b border-zinc-100"
+                    className="h-28 w-full border-b border-zinc-100 object-cover"
                   />
                 ) : (
-                  <div className="flex h-28 items-center justify-center bg-zinc-50 border-b border-zinc-100 text-zinc-300">
+                  <div className="flex h-28 items-center justify-center border-b border-zinc-100 bg-zinc-50 text-zinc-300">
                     <FileText className="h-8 w-8" />
                   </div>
                 )}
@@ -95,7 +76,7 @@ export const TemplatesCertificadosPanel: React.FC = () => {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 rounded-full"
-                      onClick={() => abrirEdicao(template)}
+                      onClick={() => navigate(`/certificados/templates/${template.id}`)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -103,7 +84,7 @@ export const TemplatesCertificadosPanel: React.FC = () => {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 rounded-full text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                      className="h-8 w-8 rounded-full text-rose-500 hover:bg-rose-50 hover:text-rose-600"
                       onClick={() => setExcluindoId(template.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -115,57 +96,6 @@ export const TemplatesCertificadosPanel: React.FC = () => {
           ))}
         </div>
       )}
-
-      <Dialog
-        open={aberto}
-        onOpenChange={(open) => {
-          setAberto(open)
-          if (!open) setEditando(null)
-        }}
-      >
-        <DialogContent className="flex h-[min(920px,94vh)] w-[min(1180px,96vw)] max-w-none flex-col overflow-hidden rounded-[28px] border-none bg-white p-0 text-zinc-900 shadow-2xl">
-          <DialogHeader className="shrink-0 border-b border-indigo-100 bg-indigo-50/50 px-6 py-4 sm:px-8">
-            <DialogTitle className="flex items-center gap-2 text-lg font-black text-zinc-900 sm:text-xl">
-              {editando ? (
-                <>
-                  <Edit className="h-5 w-5 text-indigo-600" />
-                  Editar <span className="text-indigo-600">template</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="h-5 w-5 text-indigo-600" />
-                  Novo <span className="text-indigo-600">template</span>
-                </>
-              )}
-            </DialogTitle>
-            <DialogDescription className="text-sm text-zinc-500">
-              {editando?.nome
-                ? `“${editando.nome}” · arraste elementos sobre o A4 paisagem`
-                : 'Monte o certificado visualmente sobre o A4 paisagem'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            {aberto ? (
-              <TemplateCertificadoForm
-                key={editando?.id ?? 'novo'}
-                template={editando}
-                salvando={salvando}
-                onCancel={() => {
-                  setAberto(false)
-                  setEditando(null)
-                }}
-                onSave={async (payload, fundo, removerFundo) => {
-                  const salvo = await salvar(payload, editando?.id, fundo, removerFundo)
-                  if (salvo) {
-                    setEditando(null)
-                    setAberto(false)
-                  }
-                }}
-              />
-            ) : null}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <ConfirmDeleteDialog
         open={excluindoId !== null}

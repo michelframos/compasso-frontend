@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   BringToFront,
   Copy,
   ImagePlus,
@@ -460,6 +463,42 @@ export const CertificadoCanvasEditor: React.FC<CertificadoCanvasEditorProps> = (
           </Button>
 
           <div className="mx-1 hidden h-5 w-px bg-zinc-200 sm:block" />
+
+          {selecionado?.tipo === 'texto' && (
+            <>
+              <div className="flex items-center gap-0.5 rounded-full border border-zinc-200 bg-white p-0.5">
+                {(
+                  [
+                    { value: 'left' as const, icon: AlignLeft, label: 'Alinhar à esquerda' },
+                    { value: 'center' as const, icon: AlignCenter, label: 'Centralizar' },
+                    { value: 'right' as const, icon: AlignRight, label: 'Alinhar à direita' },
+                  ] as const
+                ).map(({ value, icon: Icon, label }) => {
+                  const ativo = selecionado.alinhamento === value
+                  return (
+                    <Button
+                      key={value}
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      title={label}
+                      aria-label={label}
+                      aria-pressed={ativo}
+                      className={`h-7 w-7 rounded-full ${ativo ? 'bg-indigo-50 text-indigo-600' : 'text-zinc-600'}`}
+                      onClick={() =>
+                        atualizarElemento(selecionado.id, {
+                          alinhamento: value,
+                        } as Partial<ElementoLayout>)
+                      }
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                    </Button>
+                  )
+                })}
+              </div>
+              <div className="mx-1 hidden h-5 w-px bg-zinc-200 sm:block" />
+            </>
+          )}
 
           <div className="flex items-center gap-0.5">
             <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full" disabled={!selecionado} onClick={duplicarSelecionado} title="Duplicar">

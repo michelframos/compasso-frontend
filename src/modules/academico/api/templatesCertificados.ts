@@ -19,6 +19,11 @@ export async function listarTemplatesCertificados(search = '') {
   return data.data
 }
 
+export async function obterTemplateCertificado(id: number | string) {
+  const { data } = await api.get<{ data: TemplateCertificado }>(`/templates-certificados/${id}`)
+  return data.data
+}
+
 export async function criarTemplateCertificado(payload: { nome: string; conteudo: string }) {
   const { data } = await api.post<{ data: TemplateCertificado }>('/templates-certificados', payload)
   return data.data
