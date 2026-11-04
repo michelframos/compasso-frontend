@@ -12,7 +12,7 @@ import { useAuthStore } from '@/shared/store/useAuthStore'
 export const ConfiguracoesPage: React.FC = () => {
     const hasFinanceiro = useHasModulo('financeiro');
     const isAdmin = useAuthStore((s) => s.user?.role === 'admin');
-    const [activeTab, setActiveTab] = useState<'pix' | 'empresa' | 'usuarios' | 'whatsapp' | 'modulos' | 'professores'>('whatsapp');
+    const [activeTab, setActiveTab] = useState<'pix' | 'empresa' | 'usuarios' | 'whatsapp' | 'modulos' | 'professores'>('empresa');
 
     useEffect(() => {
         if (activeTab === 'pix' && !hasFinanceiro) {

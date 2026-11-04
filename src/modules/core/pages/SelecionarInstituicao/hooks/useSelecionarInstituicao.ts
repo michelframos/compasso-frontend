@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/shared/store/useAuthStore'
 import { switchInstituicao, normalizeInstituicoes } from '@/modules/core/api/auth'
 import type { Instituicao } from '@/modules/core/types'
+import { getHomePath, getLoginPath } from '@/shared/lib/homePath'
 
 export const useSelecionarInstituicao = () => {
   const navigate = useNavigate()
@@ -16,18 +17,18 @@ export const useSelecionarInstituicao = () => {
 
   useEffect(() => {
     if (!isAuthenticated || tenants.length === 0) {
-      navigate('/login', { replace: true })
+      navigate(getLoginPath(user?.role), { replace: true })
       return
     }
 
     if (tenant) {
-      navigate('/', { replace: true })
+      navigate(getHomePath(user?.role), { replace: true })
     }
-  }, [isAuthenticated, tenant, tenants.length, navigate])
+  }, [isAuthenticated, tenant, tenants.length, navigate, user?.role])
 
   const handleSelect = async (instituicao: Instituicao) => {
     if (!isAuthenticated || !user) {
-      navigate('/login', { replace: true })
+      navigate(getLoginPath(user?.role), { replace: true })
       return
     }
 
@@ -45,7 +46,7 @@ export const useSelecionarInstituicao = () => {
         allTenants.length > 0 ? allTenants : tenants,
       )
 
-      navigate('/', { replace: true })
+      navigate(getHomePath(user.role), { replace: true })
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       setError(message || 'Não foi possível acessar esta instituição.')
@@ -59,5 +60,6 @@ export const useSelecionarInstituicao = () => {
     error,
     loadingSlug,
     handleSelect,
+    userIsAluno: user?.role === 'aluno' || user?.role === 'responsavel',
   }
 }

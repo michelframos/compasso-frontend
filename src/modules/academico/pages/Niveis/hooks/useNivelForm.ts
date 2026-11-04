@@ -112,11 +112,18 @@ export const useNivelForm = (onSuccess: (id?: number) => void, initialData?: Niv
 
   const onSubmit = async (values: NivelFormValues) => {
 
+    const payload = {
+      ...values,
+      cor_identificacao: values.cor_identificacao?.trim()
+        ? values.cor_identificacao.trim().toUpperCase()
+        : null,
+    };
+
     try {
 
       if (initialData?.id) {
 
-        await api.put(`/niveis/${initialData.id}`, values);
+        await api.put(`/niveis/${initialData.id}`, payload);
 
         toast.success('Nível atualizado com sucesso!');
 
@@ -124,7 +131,7 @@ export const useNivelForm = (onSuccess: (id?: number) => void, initialData?: Niv
 
       } else {
 
-        const response = await api.post('/niveis', values);
+        const response = await api.post('/niveis', payload);
 
         toast.success('Nível cadastrado com sucesso!');
 

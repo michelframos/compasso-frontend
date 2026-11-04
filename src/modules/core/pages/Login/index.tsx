@@ -8,6 +8,8 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ mode = 'escola' }) => {
+  const isAluno = mode === 'aluno'
+
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-white">
       {/* Lado Esquerdo - Boas Vindas */}
@@ -27,15 +29,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ mode = 'escola' }) => {
           </div>
 
           <div className="space-y-6">
-            <h1 className="text-6xl font-bold leading-tight">Olá, <br />Seja bem-vindo!</h1>
+            <h1 className="text-6xl font-bold leading-tight">
+              {isAluno ? <>Olá,<br />vamos começar?</> : <>Olá, <br />Seja bem-vindo!</>}
+            </h1>
             <p className="text-xl text-indigo-100 max-w-md font-light leading-relaxed">
-              Gestão simplificada para escolas de música e dança. Acesse seu painel e continue sua jornada artística.
+              {isAluno
+                ? 'Acompanhe agenda, frequência, materiais e boletim em um só lugar.'
+                : 'Gestão simplificada para escolas de música e dança. Acesse seu painel e continue sua jornada artística.'}
             </p>
           </div>
         </div>
 
         <div className="relative z-10 text-sm text-indigo-200">
-          Oferecemos todas as ferramentas para simplificar a gestão da sua escola sem burocracia.
+          {isAluno
+            ? 'Feito para alunos e responsáveis acompanharem a rotina da escola.'
+            : 'Oferecemos todas as ferramentas para simplificar a gestão da sua escola sem burocracia.'}
         </div>
       </div>
 
@@ -50,3 +58,5 @@ export const LoginPage: React.FC<LoginPageProps> = ({ mode = 'escola' }) => {
 };
 
 export const PlatformLoginPage: React.FC = () => <LoginPage mode="platform" />;
+
+export const AlunoLoginPage: React.FC = () => <LoginPage mode="aluno" />;

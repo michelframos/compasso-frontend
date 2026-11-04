@@ -38,6 +38,11 @@ export const corePublicRoutes: RouteObject[] = [
     handle: { title: 'Login da plataforma' },
   },
   {
+    path: '/aluno/login',
+    element: lazyRoute(() => import('./pages/Login'), 'AlunoLoginPage'),
+    handle: { title: 'Login do aluno' },
+  },
+  {
     path: '/esqueci-minha-senha',
     element: lazyRoute(() => import('./pages/ForgotPassword'), 'ForgotPasswordPage'),
     handle: { title: 'Esqueci minha senha' },

@@ -4,13 +4,20 @@ import * as z from 'zod'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/shared/store/useAuthStore'
-import { login, normalizeInstituicoes, platformLogin, reenviarCodigoAtivacao } from '@/modules/core/api/auth'
+import {
+  alunoLogin,
+  login,
+  normalizeInstituicoes,
+  platformLogin,
+  reenviarCodigoAtivacao,
+} from '@/modules/core/api/auth'
 import { useState, type ChangeEvent } from 'react'
 import type { AxiosError } from 'axios'
-import type { LoginErrorResponse, LoginLocationState } from '@/modules/core/types'
+import type { Instituicao, LoginErrorResponse, LoginLocationState } from '@/modules/core/types'
 import { formatCnpj, getErrorMessage, unmaskCnpj } from '@/shared/lib/utils'
+import { getHomePath } from '@/shared/lib/homePath'
 
-export type LoginMode = 'escola' | 'platform'
+export type LoginMode = 'escola' | 'platform' | 'aluno'
 
 const credenciaisSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -25,7 +32,7 @@ const escolaSchema = credenciaisSchema.extend({
     .refine((value) => unmaskCnpj(value).length === 14, 'CNPJ deve ter 14 caracteres'),
 })
 
-const platformSchema = credenciaisSchema.extend({
+const simplesSchema = credenciaisSchema.extend({
   cnpj: z.string(),
 })
 
@@ -42,9 +49,10 @@ export const useLoginForm = (mode: LoginMode = 'escola') => {
   const [needsActivation, setNeedsActivation] = useState(
     mode === 'escola' && Boolean(locationState?.aguardandoAtivacao),
   )
+  const [escolasPendentes, setEscolasPendentes] = useState<Instituicao[]>([])
 
   const form = useForm<LoginFormValues>({
-    resolver: zodResolver(mode === 'escola' ? escolaSchema : platformSchema),
+    resolver: zodResolver(mode === 'escola' ? escolaSchema : simplesSchema),
     defaultValues: {
       cnpj: mode === 'escola' ? (locationState?.cnpj ?? '') : '',
       email: locationState?.email ?? '',
@@ -67,7 +75,25 @@ export const useLoginForm = (mode: LoginMode = 'escola') => {
       },
     })
 
-  const onSubmit = async (values: LoginFormValues) => {
+  const concluirLogin = (
+    response: Awaited<ReturnType<typeof login>>,
+    destino: string,
+  ) => {
+    const userData = response.data
+    const tenant = response.tenant ?? null
+    const tenants = normalizeInstituicoes(response.tenants)
+
+    const user = {
+      ...userData,
+      name: userData.nome,
+      is_super_admin: Boolean(userData.is_super_admin),
+    }
+
+    setAuth(user, response.token, tenant, tenants)
+    navigate(destino, { replace: true, state: null })
+  }
+
+  const autenticar = async (values: LoginFormValues, tenantSlug?: string) => {
     const activationCode = values.activation_code?.trim() ?? ''
 
     if (needsActivation && activationCode.length !== 6) {
@@ -79,6 +105,16 @@ export const useLoginForm = (mode: LoginMode = 'escola') => {
     setError(null)
 
     try {
+      if (mode === 'aluno') {
+        const response = await alunoLogin({
+          email: values.email,
+          password: values.password,
+          tenant_slug: tenantSlug,
+        })
+        concluirLogin(response, getHomePath(response.data.role))
+        return
+      }
+
       const response = mode === 'escola'
         ? await login({
           email: values.email,
@@ -88,22 +124,20 @@ export const useLoginForm = (mode: LoginMode = 'escola') => {
         })
         : await platformLogin({ email: values.email, password: values.password })
 
-      const userData = response.data
-      const tenant = response.tenant ?? null
-      const tenants = normalizeInstituicoes(response.tenants)
-
-      const user = {
-        ...userData,
-        name: userData.nome,
-        is_super_admin: Boolean(userData.is_super_admin),
-      }
-
-      setAuth(user, response.token, tenant, tenants)
-
-      navigate(mode === 'platform' ? '/platform' : '/', { replace: true, state: null })
+      concluirLogin(
+        response,
+        mode === 'platform' ? '/platform' : getHomePath(response.data.role),
+      )
     } catch (err) {
       const axiosError = err as AxiosError<LoginErrorResponse>
       const responseData = axiosError.response?.data
+
+      if (mode === 'aluno' && responseData?.code === 'needs_tenant_selection') {
+        const tenants = normalizeInstituicoes(responseData.tenants)
+        setEscolasPendentes(tenants)
+        setError(responseData.message ?? 'Selecione a escola para continuar.')
+        return
+      }
 
       if (responseData?.code === 'activation_required') {
         setNeedsActivation(true)
@@ -129,6 +163,14 @@ export const useLoginForm = (mode: LoginMode = 'escola') => {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const onSubmit = async (values: LoginFormValues) => {
+    await autenticar(values)
+  }
+
+  const selecionarEscola = (slug: string) => {
+    void autenticar(form.getValues(), slug)
   }
 
   const onResendCode = async () => {
@@ -168,9 +210,11 @@ export const useLoginForm = (mode: LoginMode = 'escola') => {
     registerActivationCode,
     onSubmit,
     onResendCode,
+    selecionarEscola,
     isLoading,
     isResending,
     needsActivation,
+    escolasPendentes,
     error,
   }
 }

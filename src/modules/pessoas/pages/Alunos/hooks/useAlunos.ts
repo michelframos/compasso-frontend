@@ -1,7 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import api from '@/shared/lib/axios';
 import { AxiosError } from 'axios';
+import { toast } from 'sonner';
+import { getErrorMessage } from '@/shared/lib/utils';
 import { useAlunoStore } from '@/modules/pessoas/store/useAlunoStore';
+import { enviarAcessoAluno } from '../../../api/alunos';
 import type { AlunoPaginatedResponse } from '../types';
 
 export const useAlunos = () => {
@@ -53,6 +56,20 @@ export const useAlunos = () => {
     }
   };
 
+  const [enviandoAcessoId, setEnviandoAcessoId] = useState<number | null>(null);
+
+  const enviarAcesso = async (id: number) => {
+    setEnviandoAcessoId(id);
+    try {
+      const { message } = await enviarAcessoAluno(id);
+      toast.success(message);
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, 'Não foi possível enviar o acesso ao aluno.'));
+    } finally {
+      setEnviandoAcessoId(null);
+    }
+  };
+
   return {
     alunos,
     pagination,
@@ -60,5 +77,7 @@ export const useAlunos = () => {
     error,
     fetchAlunos,
     deleteAluno,
+    enviarAcesso,
+    enviandoAcessoId,
   };
 };

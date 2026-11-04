@@ -13,7 +13,10 @@ interface DiarioGradeProps {
   frequencias: Record<number, number | null>
 }
 
-export const DiarioGrade: React.FC<DiarioGradeProps> = ({ diario, frequencias }) => (
+export const DiarioGrade: React.FC<DiarioGradeProps> = ({ diario, frequencias }) => {
+  const minima = diario.frequencia_minima ?? 75
+
+  return (
   <div className="space-y-2">
     <div className="overflow-x-auto rounded-2xl border border-zinc-100 bg-white shadow-sm">
       <table className="w-full text-left border-collapse text-xs">
@@ -58,7 +61,7 @@ export const DiarioGrade: React.FC<DiarioGradeProps> = ({ diario, frequencias })
                 })}
                 <td
                   className={`px-2 py-2 text-center font-bold border-l border-zinc-50 ${
-                    frequencia === null ? 'text-zinc-300' : frequencia < 75 ? 'text-rose-600' : 'text-zinc-700'
+                    frequencia === null ? 'text-zinc-300' : frequencia < minima ? 'text-rose-600' : 'text-zinc-700'
                   }`}
                 >
                   {frequencia === null ? '-' : `${frequencia}%`}
@@ -76,4 +79,5 @@ export const DiarioGrade: React.FC<DiarioGradeProps> = ({ diario, frequencias })
       <span><span className="text-zinc-300">-</span> Não lançado</span>
     </div>
   </div>
-)
+  )
+}

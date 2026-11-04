@@ -4,6 +4,7 @@ import {
   getDashboardResumo,
   getDashboardFinanceiro,
   getDashboardOperacional,
+  getDashboardPendencias,
 } from '@/modules/relatorios/api/dashboard';
 
 export interface DashboardStats {
@@ -11,11 +12,12 @@ export interface DashboardStats {
   value: string;
   icon: string;
   href?: string;
+  modulo?: string;
   variant?: 'danger' | 'success' | 'warning' | 'default';
-  trend: {
+  trend?: {
     value: number;
     isUp: boolean;
-  };
+  } | null;
 }
 
 export interface ChartData {
@@ -91,6 +93,14 @@ export interface OccupancyData {
   cells: OccupancyCell[];
 }
 
+export interface PendenciaItem {
+  key: string;
+  label: string;
+  count: number;
+  href: string;
+  variant?: 'danger' | 'warning' | 'default';
+}
+
 export interface DashboardResumoPayload {
   mes: string;
   leadsAtivos: number;
@@ -116,14 +126,18 @@ export interface DashboardOperacionalPayload {
   ocupacaoHorarios: OccupancyData;
 }
 
+export interface DashboardPendenciasPayload {
+  items: PendenciaItem[];
+}
+
 export interface SectionState<T> {
   data: T | null;
   isLoading: boolean;
   error: string | null;
 }
 
-function emptySection<T>(): SectionState<T> {
-  return { data: null, isLoading: true, error: null };
+function emptySection<T>(loading = true): SectionState<T> {
+  return { data: null, isLoading: loading, error: null };
 }
 
 function errorMessage(err: unknown, fallback: string): string {
@@ -136,10 +150,19 @@ export const currentMonthKey = () => {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 };
 
-export const useDashboardData = (mes: string) => {
+type UseDashboardDataOptions = {
+  carregarFinanceiro?: boolean;
+};
+
+export const useDashboardData = (mes: string, options: UseDashboardDataOptions = {}) => {
+  const carregarFinanceiro = options.carregarFinanceiro !== false;
+
   const [resumo, setResumo] = useState<SectionState<DashboardResumoPayload>>(emptySection);
-  const [financeiro, setFinanceiro] = useState<SectionState<DashboardFinanceiroPayload>>(emptySection);
+  const [financeiro, setFinanceiro] = useState<SectionState<DashboardFinanceiroPayload>>(
+    emptySection(carregarFinanceiro),
+  );
   const [operacional, setOperacional] = useState<SectionState<DashboardOperacionalPayload>>(emptySection);
+  const [pendencias, setPendencias] = useState<SectionState<DashboardPendenciasPayload>>(emptySection);
 
   const fetchResumo = useCallback(async () => {
     setResumo((prev) => ({ ...prev, isLoading: true, error: null }));
@@ -152,6 +175,10 @@ export const useDashboardData = (mes: string) => {
   }, [mes]);
 
   const fetchFinanceiro = useCallback(async () => {
+    if (!carregarFinanceiro) {
+      setFinanceiro({ data: null, isLoading: false, error: null });
+      return;
+    }
     setFinanceiro((prev) => ({ ...prev, isLoading: true, error: null }));
     try {
       const data = (await getDashboardFinanceiro(mes)) as DashboardFinanceiroPayload;
@@ -159,7 +186,7 @@ export const useDashboardData = (mes: string) => {
     } catch (err) {
       setFinanceiro({ data: null, isLoading: false, error: errorMessage(err, 'Erro ao carregar dados financeiros') });
     }
-  }, [mes]);
+  }, [carregarFinanceiro, mes]);
 
   const fetchOperacional = useCallback(async () => {
     setOperacional((prev) => ({ ...prev, isLoading: true, error: null }));
@@ -171,9 +198,24 @@ export const useDashboardData = (mes: string) => {
     }
   }, [mes]);
 
+  const fetchPendencias = useCallback(async () => {
+    setPendencias((prev) => ({ ...prev, isLoading: true, error: null }));
+    try {
+      const data = (await getDashboardPendencias()) as DashboardPendenciasPayload;
+      setPendencias({ data, isLoading: false, error: null });
+    } catch (err) {
+      setPendencias({ data: null, isLoading: false, error: errorMessage(err, 'Erro ao carregar pendências') });
+    }
+  }, []);
+
   const refetch = useCallback(async () => {
-    await Promise.allSettled([fetchResumo(), fetchFinanceiro(), fetchOperacional()]);
-  }, [fetchResumo, fetchFinanceiro, fetchOperacional]);
+    await Promise.allSettled([
+      fetchResumo(),
+      fetchFinanceiro(),
+      fetchOperacional(),
+      fetchPendencias(),
+    ]);
+  }, [fetchResumo, fetchFinanceiro, fetchOperacional, fetchPendencias]);
 
   useEffect(() => {
     void refetch();
@@ -183,9 +225,11 @@ export const useDashboardData = (mes: string) => {
     resumo,
     financeiro,
     operacional,
+    pendencias,
     refetch,
     refetchResumo: fetchResumo,
     refetchFinanceiro: fetchFinanceiro,
     refetchOperacional: fetchOperacional,
+    refetchPendencias: fetchPendencias,
   };
 };

@@ -11,6 +11,7 @@ export interface Instrumento {
   status: 'disponivel' | 'emprestado' | 'manutencao' | 'inativo';
   id_aluno?: number;
   data_emprestimo?: string;
+  data_prevista_devolucao?: string | null;
   observacoes?: string;
   aluno?: {
     id: number;
@@ -37,6 +38,7 @@ interface InstrumentoStore {
   emprestarInstrumento: (id: number, data: {
     id_aluno: number;
     data_emprestimo: string;
+    data_prevista_devolucao?: string | null;
     contrato_id?: number | null;
     contrato_gerado?: string | null;
     gerar_conta?: boolean;

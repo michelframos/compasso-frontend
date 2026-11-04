@@ -14,6 +14,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { MobileMenu } from './components/MobileMenu'
+import { SidebarNav } from './components/SidebarNav'
 import { TenantSelector } from './components/TenantSelector'
 import type { useMainLayout } from './hooks/useMainLayout'
 
@@ -32,7 +33,7 @@ export const MainLayoutShell: React.FC<MainLayoutShellProps> = ({ layout, childr
     isSwitching,
     handleLogout,
     handleSwitchTenant,
-    menuItems,
+    navEntries,
     bottomMenuItems,
     isActive,
     isCollapsed,
@@ -69,10 +70,10 @@ export const MainLayoutShell: React.FC<MainLayoutShellProps> = ({ layout, childr
     <div className="flex h-screen bg-zinc-50 overflow-hidden print:h-auto print:overflow-visible print:block">
       <aside
         className={`${isCollapsed ? 'w-16' : 'w-64'
-          } hidden md:flex bg-white border-r border-zinc-200 flex-col transition-all duration-300 ease-in-out z-20 relative shadow-sm print:hidden`}
+          } hidden md:flex bg-white border-r border-zinc-200 flex-col transition-all duration-300 ease-in-out z-20 relative shadow-sm print:hidden h-full min-h-0`}
       >
-        <div className={`py-6 flex flex-col flex-1 overflow-y-auto custom-scrollbar ${isCollapsed ? 'items-center overflow-x-hidden' : 'items-stretch px-4'}`}>
-          <div className={`flex items-center mb-10 shrink-0 ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
+        <div className={`py-6 flex flex-col flex-1 min-h-0 ${isCollapsed ? 'items-center overflow-x-hidden px-0' : 'items-stretch px-4'}`}>
+          <div className={`flex items-center mb-6 shrink-0 ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
             <Link to={homePath} className="p-2 bg-indigo-600 rounded-full text-white shadow-lg shadow-indigo-100 flex items-center justify-center shrink-0">
               <Music2 className="w-6 h-6" />
             </Link>
@@ -81,32 +82,15 @@ export const MainLayoutShell: React.FC<MainLayoutShellProps> = ({ layout, childr
             )}
           </div>
 
-          <nav className="flex-1 flex flex-col gap-1.5">
-            {menuItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 p-2.5 rounded-full transition-all duration-200 group relative ${isActive(item.path)
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100'
-                    : 'text-zinc-500 hover:text-indigo-600 hover:bg-zinc-50'
-                  }`}
-              >
-                <item.icon className={`w-5 h-5 shrink-0 ${isActive(item.path) ? 'text-white' : ''}`} />
-                {!isCollapsed && (
-                  <span className="text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300">
-                    {item.label}
-                  </span>
-                )}
-                {isCollapsed && (
-                  <span className="absolute left-full ml-4 px-2.5 py-1.5 bg-zinc-900 text-white text-[11px] font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none z-50 transition-all transform translate-x-[-10px] group-hover:translate-x-0 whitespace-nowrap shadow-xl">
-                    {item.label}
-                  </span>
-                )}
-              </Link>
-            ))}
+          <nav className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-0.5">
+            <SidebarNav
+              entries={navEntries}
+              isActive={isActive}
+              isCollapsed={isCollapsed}
+            />
           </nav>
 
-          <div className="flex flex-col gap-1.5 pt-4 border-t border-zinc-100 shrink-0">
+          <div className="flex flex-col gap-1.5 pt-4 mt-2 border-t border-zinc-100 shrink-0">
             {bottomMenuItems.map((item) => (
               <Link
                 key={item.path}

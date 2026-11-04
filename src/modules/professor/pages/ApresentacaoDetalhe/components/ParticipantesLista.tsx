@@ -54,6 +54,7 @@ export const ParticipantesLista: React.FC<{ participantes: ParticipanteApresenta
                       {participante.meu_aluno && <span className="font-bold text-indigo-600">Seu aluno</span>}
                       <span className="inline-flex items-center gap-1">
                         <Shirt className="w-3 h-3" />
+                        {participante.papel ? `${participante.papel} · ` : ''}
                         {participante.tamanho_figurino ? `Tam. ${participante.tamanho_figurino}` : 'Tamanho não informado'}
                       </span>
                     </div>

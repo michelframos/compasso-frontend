@@ -69,8 +69,9 @@ export interface SwitchInstituicaoResponse {
 
 export interface LoginErrorResponse {
   message?: string
-  code?: 'activation_required' | 'already_activated' | string
+  code?: 'activation_required' | 'already_activated' | 'needs_tenant_selection' | string
   errors?: Record<string, string[]>
+  tenants?: Instituicao[] | { data: Instituicao[] }
 }
 
 /** State de navegação enviado ao /login logo após o cadastro da escola. */
@@ -109,6 +110,10 @@ export interface ConfiguracaoEmpresa {
   cep: string | null
   id_estado: number | null
   id_cidade: number | null
+  permitir_aluno_editar_medidas?: boolean
+  limite_reposicoes_periodo?: number | null
+  prazo_reposicao_dias?: number | null
+  frequencia_minima?: number
   estado?: { id: number; nome: string; sigla: string }
   cidade?: { id: number; nome: string }
 }
@@ -124,6 +129,10 @@ export interface ConfiguracaoEmpresaFormData {
   cep: string | null
   id_estado: string | null
   id_cidade: string | null
+  permitir_aluno_editar_medidas?: boolean
+  limite_reposicoes_periodo?: number | string | null
+  prazo_reposicao_dias?: number | string | null
+  frequencia_minima?: number | string
 }
 
 export interface Perfil {

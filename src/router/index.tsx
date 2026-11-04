@@ -13,6 +13,7 @@ import { notificacoesRoutes } from '@/modules/notificacoes'
 import { relatoriosRoutes } from '@/modules/relatorios'
 import { platformRoutes } from '@/modules/platform'
 import { professorRoutes } from '@/modules/professor'
+import { alunoAreaRoute } from '@/modules/aluno'
 import { PlatformProtectedRoute } from '@/shared/components/PlatformProtectedRoute'
 import { HomeRedirect } from '@/shared/components/HomeRedirect'
 
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       ...corePublicRoutes,
+      alunoAreaRoute,
       {
         path: '/',
         element: (

@@ -151,6 +151,7 @@ export interface TurmaDoProfessor {
   observacoes: string | null
   status: TurmaStatus
   maximo_alunos: number
+  frequencia_minima?: number
   data_inicio: string | null
   data_fim: string | null
   alunos_ativos_count?: number
@@ -198,6 +199,7 @@ export interface DiarioTurma {
   nivel: string
   professor: string
   status: TurmaStatus
+  frequencia_minima?: number
   data_inicio: string
   data_fim: string
   horarios: Pick<TurmaHorario, 'dia_semana' | 'hora_inicio' | 'hora_termino'>[]
@@ -349,6 +351,7 @@ export interface ResumoFrequencia {
   ausentes: number
   justificados: number
   percentual_presenca: number | null
+  frequencia_minima?: number
 }
 
 export interface FichaAluno {
@@ -382,8 +385,9 @@ export interface FichaAluno {
     turma: (TurmaResumo & { status: TurmaStatus }) | null
   }[]
   frequencia: ResumoFrequencia & {
+    frequencia_minima?: number
     /** `id_turma` nulo agrupa as aulas individuais (sem turma). */
-    por_turma: (ResumoFrequencia & { id_turma: number | null })[]
+    por_turma: (ResumoFrequencia & { id_turma: number | null; frequencia_minima?: number })[]
     ultimas: {
       id_aula: number
       id_turma: number | null
@@ -436,12 +440,14 @@ export interface RelatorioFrequencia {
     total_alunos: number
     media_absenteismo: number
     alunos_em_risco: number
+    frequencia_minima?: number
   }
   filters: {
     data_inicio: string
     data_fim: string
     id_turma: number | null
     limite_faltas: number
+    frequencia_minima?: number
   }
 }
 
@@ -482,6 +488,7 @@ export interface ParticipanteApresentacao {
   id_aluno: number
   nome: string | null
   meu_aluno: boolean
+  papel: string | null
   tamanho_figurino: string | null
   recebeu_figurino: boolean
   presenca_ensaio_geral: boolean

@@ -36,6 +36,12 @@ const turmaSchema = z.object({
 
   maximo_alunos: z.coerce.number().min(1, 'Mínimo de 1 aluno'),
 
+  frequencia_minima: z.union([
+    z.literal(''),
+    z.null(),
+    z.coerce.number().min(0, 'Mínimo 0%').max(100, 'Máximo 100%'),
+  ]).optional(),
+
   descricao: z.string().max(255).optional().or(z.literal('')),
 
   observacoes: z.string().optional().or(z.literal('')),
@@ -104,6 +110,8 @@ export const useTurmaForm = (onSuccess: (id?: number) => void, initialData?: Tur
 
       maximo_alunos: initialData?.maximo_alunos || 20,
 
+      frequencia_minima: initialData?.frequencia_minima ?? '',
+
       descricao: initialData?.descricao || '',
 
       observacoes: initialData?.observacoes || '',
@@ -169,6 +177,8 @@ export const useTurmaForm = (onSuccess: (id?: number) => void, initialData?: Tur
           id_professor: data.id_professor,
 
           maximo_alunos: data.maximo_alunos,
+
+          frequencia_minima: data.frequencia_minima ?? '',
 
           descricao: data.descricao || '',
 
@@ -244,11 +254,19 @@ export const useTurmaForm = (onSuccess: (id?: number) => void, initialData?: Tur
 
   const onSubmit = async (values: TurmaFormValues) => {
 
+    const payload = {
+      ...values,
+      frequencia_minima:
+        values.frequencia_minima === '' || values.frequencia_minima === null || values.frequencia_minima === undefined
+          ? null
+          : Number(values.frequencia_minima),
+    };
+
     try {
 
       if (initialData?.id) {
 
-        await api.put(`/turmas/${initialData.id}`, values);
+        await api.put(`/turmas/${initialData.id}`, payload);
 
         
 
@@ -264,7 +282,7 @@ export const useTurmaForm = (onSuccess: (id?: number) => void, initialData?: Tur
 
       } else {
 
-        const response = await api.post('/turmas', values);
+        const response = await api.post('/turmas', payload);
 
         toast.success('Turma cadastrada com sucesso!');
 

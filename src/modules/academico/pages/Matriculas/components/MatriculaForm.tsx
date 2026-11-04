@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import {
   Loader2, GraduationCap, Info, History, FileText,
   DollarSign, CalendarDays, UserCircle, BookOpen, Users
@@ -14,10 +14,7 @@ import { MatriculaMensalidades } from './MatriculaMensalidades';
 import { MatriculaAgendamentos } from './MatriculaAgendamentos';
 import { MatriculaContrato } from './MatriculaContrato';
 import { useContratos } from '@/modules/financeiro';
-import { useLeads } from '@/modules/comercial';
-import { useCursos } from '../../Cursos/hooks/useCursos';
-import { useNiveis } from '../../Niveis/hooks/useNiveis';
-import { useProfessores } from '@/modules/pessoas'
+import { leadsApi, type Lead } from '@/modules/comercial';
 import { useHasModulo } from '@/shared/hooks/useHasModulo'
 import type { Aluno } from '../types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
@@ -26,6 +23,10 @@ import { toast } from 'sonner';
 import { substituirPlaceholders } from '@/shared/lib/contrato-utils';
 import api from '@/shared/lib/axios';
 import { cn } from '@/shared/lib/utils';
+
+type OpcaoCurso = { id: number; nome: string }
+type OpcaoNivel = { id: number; nome: string; curso_id?: number | null }
+type OpcaoProfessor = { id: number; usuario: { nome: string } }
 interface MatriculaFormProps {
   onClose: () => void;
   onSuccess: () => void;
@@ -56,25 +57,55 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
   const { alunos, fetchAlunos, isLoading: isLoadingAlunos } = useAlunos();
   const { turmas, fetchTurmas, isLoading: isLoadingTurmas } = useTurmas();
   const { contratos, fetchContratos } = useContratos();
-  const { leads, fetchLeads } = useLeads();
-  const { cursos, fetchCursos } = useCursos();
-  const { niveis, fetchNiveis } = useNiveis();
-  const { professores, fetchProfessores } = useProfessores();
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [cursos, setCursos] = useState<OpcaoCurso[]>([]);
+  const [niveis, setNiveis] = useState<OpcaoNivel[]>([]);
+  const [professores, setProfessores] = useState<OpcaoProfessor[]>([]);
   const [preselectedAluno, setPreselectedAluno] = useState<Aluno | null>(null);
+  const turmaDetalheCache = useRef<Map<string, unknown>>(new Map());
+  const cursoDetalheCache = useRef<Map<string, unknown>>(new Map());
+  const alunoDetalheCache = useRef<Map<string, unknown>>(new Map());
   const tipoMatricula = watch('tipo');
   const selectedTurmaId = watch('id_turma');
   const selectedCursoId = watch('id_curso');
   const selectedAlunoId = watch('id_aluno');
   const selectedContratoId = watch('contrato_id');
+
+  // Base do formulário: só o necessário para matrícula em turma (fluxo padrão).
   useEffect(() => {
     fetchAlunos('id', 'desc', '', 200);
     fetchTurmas();
     if (hasFinanceiro) fetchContratos(1, 'nome', 'asc');
-    if (hasLeads) fetchLeads();
-    fetchCursos();
-    fetchNiveis();
-    fetchProfessores();
-  }, [fetchAlunos, fetchTurmas, fetchContratos, fetchLeads, fetchCursos, fetchNiveis, fetchProfessores, hasFinanceiro, hasLeads]);
+    if (hasLeads) {
+      leadsApi.listLeads({ page: 1 })
+        .then((res) => setLeads(res.data ?? []))
+        .catch((err) => console.error('Erro ao carregar leads:', err));
+    }
+  }, [fetchAlunos, fetchTurmas, fetchContratos, hasFinanceiro, hasLeads]);
+
+  // Curso/nível/professor só entram quando o tipo muda para "curso".
+  useEffect(() => {
+    if (tipoMatricula !== 'curso') return;
+    let ativo = true;
+    const carregarOpcoesCurso = async () => {
+      try {
+        const [cursosRes, niveisRes, professoresRes] = await Promise.all([
+          api.get('/cursos', { params: { per_page: 100 } }),
+          api.get('/niveis', { params: { per_page: 100 } }),
+          api.get('/professores', { params: { per_page: 100 } }),
+        ]);
+        if (!ativo) return;
+        setCursos(cursosRes.data.data ?? []);
+        setNiveis(niveisRes.data.data ?? []);
+        setProfessores(professoresRes.data.data ?? []);
+      } catch (err) {
+        console.error('Erro ao carregar opções de matrícula em curso:', err);
+      }
+    };
+    void carregarOpcoesCurso();
+    return () => { ativo = false; };
+  }, [tipoMatricula]);
+
   useEffect(() => {
     if (defaultAlunoId && !alunos.find(a => String(a.id) === String(defaultAlunoId))) {
       api.get(`/alunos/${defaultAlunoId}`).then(res => {
@@ -82,7 +113,7 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
       }).catch(err => console.error('Erro ao buscar aluno pré-selecionado:', err));
     }
   }, [defaultAlunoId, alunos]);
-  // Filtra níveis pelo curso selecionado (quando tipo=curso)
+
   const niveisFiltered = selectedCursoId
     ? niveis.filter(n => !n.curso_id || n.curso_id === Number(selectedCursoId))
     : niveis;
@@ -92,13 +123,43 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
     selectedTurmaId &&
     Number(selectedTurmaId) !== fullMatriculaData.id_turma
   );
-  // Lógica de Cascata de Contratos — apenas para tipo=turma
+
+  const obterTurmaDetalhe = async (turmaId: string) => {
+    const cached = turmaDetalheCache.current.get(turmaId);
+    if (cached) return cached;
+    const response = await api.get(`/turmas/${turmaId}`);
+    const data = response.data.data;
+    turmaDetalheCache.current.set(turmaId, data);
+    return data;
+  };
+
+  const obterCursoDetalhe = async (cursoId: string) => {
+    const cached = cursoDetalheCache.current.get(cursoId);
+    if (cached) return cached;
+    const response = await api.get(`/cursos/${cursoId}`);
+    const data = response.data.data;
+    cursoDetalheCache.current.set(cursoId, data);
+    return data;
+  };
+
+  const obterAlunoDetalhe = async (alunoId: string) => {
+    const cached = alunoDetalheCache.current.get(alunoId);
+    if (cached) return cached;
+    const response = await api.get(`/alunos/${alunoId}`);
+    const data = response.data.data;
+    alunoDetalheCache.current.set(alunoId, data);
+    return data;
+  };
+
+  // Cascata de contratos — tipo=turma
   useEffect(() => {
     if (!hasFinanceiro || !selectedTurmaId || isEdit || tipoMatricula !== 'turma') return;
     const aplicarContratoCascata = async () => {
       try {
-        const response = await api.get(`/turmas/${selectedTurmaId}`);
-        const turmaData = response.data.data;
+        const turmaData = await obterTurmaDetalhe(String(selectedTurmaId)) as {
+          contrato_id?: number | null
+          curso?: { contrato_id?: number | null }
+        };
         let contratoIdParaAplicar = null;
         let origem = '';
         if (turmaData.contrato_id) {
@@ -118,15 +179,15 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
         console.error('Erro ao buscar contrato da turma:', error);
       }
     };
-    aplicarContratoCascata();
+    void aplicarContratoCascata();
   }, [selectedTurmaId, isEdit, tipoMatricula, form, hasFinanceiro]);
-  // Lógica de Cascata de Contratos — para tipo=curso
+
+  // Cascata de contratos — tipo=curso
   useEffect(() => {
     if (!hasFinanceiro || !selectedCursoId || isEdit || tipoMatricula !== 'curso') return;
     const aplicarContratoCascataCurso = async () => {
       try {
-        const response = await api.get(`/cursos/${selectedCursoId}`);
-        const cursoData = response.data.data;
+        const cursoData = await obterCursoDetalhe(String(selectedCursoId)) as { contrato_id?: number | null };
         if (cursoData?.contrato_id && form.getValues('contrato_id') !== cursoData.contrato_id) {
           form.setValue('contrato_id', cursoData.contrato_id);
           toast.success('Contrato padrão do curso aplicado automaticamente!', {
@@ -137,9 +198,9 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
         console.error('Erro ao buscar contrato do curso:', error);
       }
     };
-    aplicarContratoCascataCurso();
+    void aplicarContratoCascataCurso();
   }, [selectedCursoId, isEdit, tipoMatricula, form, hasFinanceiro]);
-  // Lógica de Atribuição Automática de Lead baseada no Aluno
+
   useEffect(() => {
     if (!hasLeads || !selectedAlunoId || isEdit || form.getValues('id_lead')) return;
     const aluno = alunos.find(a => String(a.id) === String(selectedAlunoId));
@@ -150,7 +211,8 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
       });
     }
   }, [selectedAlunoId, isEdit, alunos, form, hasLeads]);
-  // Lógica de Geração de Snapshot do Contrato
+
+  // Snapshot do contrato — reutiliza cache de aluno/turma/curso
   useEffect(() => {
     if (!hasFinanceiro || !selectedContratoId || selectedContratoId.toString() === 'none' || !selectedAlunoId) {
       if (form.getValues('contrato_gerado') !== null) {
@@ -166,15 +228,13 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
       try {
         const contrato = contratos.find(c => c.id === Number(selectedContratoId));
         if (!contrato) return;
-        const [alunoRes, entidadeRes] = await Promise.all([
-          api.get(`/alunos/${selectedAlunoId}`),
+        const [alunoData, entidadeData] = await Promise.all([
+          obterAlunoDetalhe(String(selectedAlunoId)),
           tipoMatricula === 'turma'
-            ? api.get(`/turmas/${selectedTurmaId}`)
-            : api.get(`/cursos/${selectedCursoId}`)
+            ? obterTurmaDetalhe(String(selectedTurmaId))
+            : obterCursoDetalhe(String(selectedCursoId)),
         ]);
         if (!isMounted) return;
-        const alunoData = alunoRes.data.data;
-        const entidadeData = entidadeRes.data.data;
         const conteudoGerado = substituirPlaceholders(contrato.conteudo, {
           aluno: alunoData,
           turma: tipoMatricula === 'turma' ? entidadeData : undefined,
@@ -187,12 +247,12 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
       } catch (error) {
         console.error('Erro ao gerar snapshot do contrato:', error);
       } finally {
-        setIsGeneratingSnapshot(false);
+        if (isMounted) setIsGeneratingSnapshot(false);
       }
     };
     const timeoutId = setTimeout(gerarSnapshot, 500);
     return () => { isMounted = false; clearTimeout(timeoutId); };
-  }, [hasFinanceiro, selectedContratoId, selectedAlunoId, selectedTurmaId, selectedCursoId, tipoMatricula, contratos, form.getValues, form.setValue]);
+  }, [hasFinanceiro, selectedContratoId, selectedAlunoId, selectedTurmaId, selectedCursoId, tipoMatricula, contratos, form]);
   const alunosDisponiveis = Array.isArray(alunos)
     ? (excludedAlunoIds.length > 0
       ? alunos.filter(a => a && !excludedAlunoIds.includes(a.id))

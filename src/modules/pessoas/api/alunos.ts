@@ -38,6 +38,11 @@ export async function deleteAluno(id: number | string) {
   await api.delete(`/alunos/${id}`)
 }
 
+export async function enviarAcessoAluno(id: number | string) {
+  const { data } = await api.post<{ message: string }>(`/alunos/${id}/enviar-acesso`)
+  return data
+}
+
 export async function createContratoAvulso(
   alunoId: number | string,
   payload: { contrato_id: number; contrato_gerado: string },

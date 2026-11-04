@@ -7,20 +7,21 @@ import type { FrequenciaDoAluno } from '../../../types'
 const percentualPresenca = (aluno: FrequenciaDoAluno) =>
   aluno.total_aulas > 0 ? Math.round((aluno.total_presencas / aluno.total_aulas) * 100) : 0
 
-const corPercentual = (percentual: number) => {
-  if (percentual >= 75) return { texto: 'text-emerald-600', barra: 'bg-emerald-500' }
-  if (percentual >= 50) return { texto: 'text-amber-600', barra: 'bg-amber-500' }
+const corPercentual = (percentual: number, minima = 75) => {
+  if (percentual >= minima) return { texto: 'text-emerald-600', barra: 'bg-emerald-500' }
+  if (percentual >= minima * 0.66) return { texto: 'text-amber-600', barra: 'bg-amber-500' }
   return { texto: 'text-rose-600', barra: 'bg-rose-500' }
 }
 
 interface AlunoFrequenciaItemProps {
   aluno: FrequenciaDoAluno
   idTurma: number | null
+  frequenciaMinima?: number
 }
 
-export const AlunoFrequenciaItem: React.FC<AlunoFrequenciaItemProps> = ({ aluno, idTurma }) => {
+export const AlunoFrequenciaItem: React.FC<AlunoFrequenciaItemProps> = ({ aluno, idTurma, frequenciaMinima = 75 }) => {
   const percentual = percentualPresenca(aluno)
-  const cor = corPercentual(percentual)
+  const cor = corPercentual(percentual, frequenciaMinima)
   const faltasNaoJustificadas = aluno.total_faltas - aluno.total_justificadas
 
   return (

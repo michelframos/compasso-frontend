@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 const emprestimoSchema = z.object({
   id_aluno: z.string().min(1, 'Selecione um aluno'),
   data_emprestimo: z.string().min(1, 'Data de empréstimo é obrigatória'),
+  data_prevista_devolucao: z.string().optional(),
   gerar_conta: z.boolean(),
   valor_conta: z.number().optional(),
   data_vencimento_conta: z.string().optional(),
@@ -26,6 +27,7 @@ export const useEmprestimoForm = (onSuccess: () => void, instrumentoId: number) 
     defaultValues: {
       id_aluno: '',
       data_emprestimo: format(new Date(), 'yyyy-MM-dd'),
+      data_prevista_devolucao: '',
       gerar_conta: false,
       valor_conta: 0,
       data_vencimento_conta: format(new Date(), 'yyyy-MM-dd'),
@@ -37,6 +39,7 @@ export const useEmprestimoForm = (onSuccess: () => void, instrumentoId: number) 
     const result = await emprestarInstrumento(instrumentoId, {
       id_aluno: Number(data.id_aluno),
       data_emprestimo: data.data_emprestimo,
+      data_prevista_devolucao: data.data_prevista_devolucao || null,
       contrato_id: contratoId,
       contrato_gerado: contratoGerado,
       gerar_conta: data.gerar_conta,
