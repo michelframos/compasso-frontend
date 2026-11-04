@@ -10,16 +10,16 @@ const STATUS_PRESENCA: Record<PresencaStatus, { sigla: string; label: string; cl
   justificado: { sigla: 'J', label: 'Falta justificada', className: 'bg-amber-500 text-white' },
 }
 
-const corPercentual = (percentual: number | null) => {
+const corPercentual = (percentual: number | null, minima = 75) => {
   if (percentual === null) return 'text-zinc-400'
-  if (percentual >= 75) return 'text-emerald-600'
-  if (percentual >= 50) return 'text-amber-600'
+  if (percentual >= minima) return 'text-emerald-600'
+  if (percentual >= minima * 0.66) return 'text-amber-600'
   return 'text-rose-600'
 }
 
-const corBarra = (percentual: number) => {
-  if (percentual >= 75) return 'bg-emerald-500'
-  if (percentual >= 50) return 'bg-amber-500'
+const corBarra = (percentual: number, minima = 75) => {
+  if (percentual >= minima) return 'bg-emerald-500'
+  if (percentual >= minima * 0.66) return 'bg-amber-500'
   return 'bg-rose-500'
 }
 
@@ -38,6 +38,7 @@ interface FrequenciaResumoProps {
 
 export const FrequenciaResumo: React.FC<FrequenciaResumoProps> = ({ frequencia, matriculas }) => {
   const turmaPorId = new Map(matriculas.filter((m) => m.turma).map((m) => [m.id_turma, m.turma]))
+  const minimaGeral = frequencia.frequencia_minima ?? 75
 
   if (frequencia.total === 0) {
     return (
@@ -51,7 +52,7 @@ export const FrequenciaResumo: React.FC<FrequenciaResumoProps> = ({ frequencia, 
     <div className="p-4 sm:p-5 rounded-3xl bg-white border border-zinc-100 shadow-sm space-y-4">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className={`text-3xl font-black ${corPercentual(frequencia.percentual_presenca)}`}>
+          <p className={`text-3xl font-black ${corPercentual(frequencia.percentual_presenca, minimaGeral)}`}>
             {frequencia.percentual_presenca ?? 0}%
           </p>
           <p className="text-xs text-zinc-500">de presença em {frequencia.total} {frequencia.total === 1 ? 'aula' : 'aulas'}</p>
@@ -61,23 +62,26 @@ export const FrequenciaResumo: React.FC<FrequenciaResumoProps> = ({ frequencia, 
 
       {frequencia.por_turma.length > 1 && (
         <div className="space-y-3">
-          {frequencia.por_turma.map((turma) => (
+          {frequencia.por_turma.map((turma) => {
+            const minima = turma.frequencia_minima ?? minimaGeral
+            return (
             <div key={turma.id_turma ?? 'individuais'} className="space-y-1.5">
               <div className="flex items-center justify-between gap-3 text-xs">
                 <span className="font-semibold text-zinc-700 truncate">
                   {turma.id_turma === null ? 'Aulas individuais' : apelidoTurma(turmaPorId.get(turma.id_turma))}
                 </span>
-                <span className={`font-bold ${corPercentual(turma.percentual_presenca)}`}>
+                <span className={`font-bold ${corPercentual(turma.percentual_presenca, minima)}`}>
                   {turma.percentual_presenca === null ? '—' : `${turma.percentual_presenca}%`}
                 </span>
               </div>
               <div className="h-1.5 rounded-full bg-zinc-100 overflow-hidden">
                 {turma.percentual_presenca !== null && (
-                  <div className={`h-full rounded-full ${corBarra(turma.percentual_presenca)}`} style={{ width: `${turma.percentual_presenca}%` }} />
+                  <div className={`h-full rounded-full ${corBarra(turma.percentual_presenca, minima)}`} style={{ width: `${turma.percentual_presenca}%` }} />
                 )}
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

@@ -113,6 +113,7 @@ export interface ConfiguracaoEmpresa {
   permitir_aluno_editar_medidas?: boolean
   limite_reposicoes_periodo?: number | null
   prazo_reposicao_dias?: number | null
+  frequencia_minima?: number
   estado?: { id: number; nome: string; sigla: string }
   cidade?: { id: number; nome: string }
 }
@@ -131,6 +132,7 @@ export interface ConfiguracaoEmpresaFormData {
   permitir_aluno_editar_medidas?: boolean
   limite_reposicoes_periodo?: number | string | null
   prazo_reposicao_dias?: number | string | null
+  frequencia_minima?: number | string
 }
 
 export interface Perfil {

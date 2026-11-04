@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Award, Edit, FileText, Plus, Trash2 } from 'lucide-react'
+import { Award, Copy, Edit, FileText, Loader2, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { ConfirmDeleteDialog } from '@/shared/components/ConfirmDeleteDialog'
@@ -9,7 +9,7 @@ import { useTemplatesCertificados } from '../hooks/useTemplatesCertificados'
 
 export const TemplatesCertificadosPanel: React.FC = () => {
   const navigate = useNavigate()
-  const { templates, isLoading, excluir } = useTemplatesCertificados()
+  const { templates, isLoading, duplicandoId, excluir, duplicar } = useTemplatesCertificados()
   const [excluindoId, setExcluindoId] = useState<number | null>(null)
 
   return (
@@ -76,6 +76,7 @@ export const TemplatesCertificadosPanel: React.FC = () => {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 rounded-full"
+                      title="Editar"
                       onClick={() => navigate(`/certificados/templates/${template.id}`)}
                     >
                       <Edit className="h-4 w-4" />
@@ -84,7 +85,23 @@ export const TemplatesCertificadosPanel: React.FC = () => {
                       type="button"
                       variant="ghost"
                       size="icon"
+                      className="h-8 w-8 rounded-full"
+                      title="Duplicar"
+                      disabled={duplicandoId === template.id}
+                      onClick={() => void duplicar(template.id)}
+                    >
+                      {duplicandoId === template.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 rounded-full text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                      title="Remover"
                       onClick={() => setExcluindoId(template.id)}
                     >
                       <Trash2 className="h-4 w-4" />

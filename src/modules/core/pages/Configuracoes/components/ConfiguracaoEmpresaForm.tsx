@@ -48,6 +48,7 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
             permitir_aluno_editar_medidas: false,
             limite_reposicoes_periodo: '',
             prazo_reposicao_dias: '',
+            frequencia_minima: 75,
         },
     });
 
@@ -118,6 +119,7 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
                 permitir_aluno_editar_medidas: Boolean(config.permitir_aluno_editar_medidas),
                 limite_reposicoes_periodo: config.limite_reposicoes_periodo ?? '',
                 prazo_reposicao_dias: config.prazo_reposicao_dias ?? '',
+                frequencia_minima: config.frequencia_minima ?? 75,
             });
         }
     }, [config, reset]);
@@ -131,6 +133,7 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
             ...data,
             limite_reposicoes_periodo: numero(data.limite_reposicoes_periodo),
             prazo_reposicao_dias: numero(data.prazo_reposicao_dias),
+            frequencia_minima: Number(data.frequencia_minima ?? 75),
         });
     };
 
@@ -372,6 +375,21 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
                             {...register('prazo_reposicao_dias')}
                         />
                         <p className="text-xs text-zinc-500 ml-1">Dias depois da aula perdida para pedir reposição. Vazio não limita.</p>
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="frequencia_minima" className="text-zinc-700 font-medium ml-1">Frequência mínima (%)</Label>
+                        <Input
+                            id="frequencia_minima"
+                            type="number"
+                            min={0}
+                            max={100}
+                            step="0.01"
+                            className="h-11 rounded-xl border-zinc-200"
+                            {...register('frequencia_minima', { required: true, min: 0, max: 100 })}
+                        />
+                        <p className="text-xs text-zinc-500 ml-1">
+                            Padrão da escola para certificados e indicadores. Turmas podem sobrescrever no cadastro.
+                        </p>
                     </div>
                 </div>
             </div>

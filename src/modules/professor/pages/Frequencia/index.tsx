@@ -101,7 +101,12 @@ export const FrequenciaPage: React.FC = () => {
             <h2 className="text-[13px] font-black text-zinc-500 uppercase tracking-wider">Por aluno</h2>
             <div className="space-y-2">
               {relatorio.data.map((aluno) => (
-                <AlunoFrequenciaItem key={aluno.id} aluno={aluno} idTurma={idTurma} />
+                <AlunoFrequenciaItem
+                  key={aluno.id}
+                  aluno={aluno}
+                  idTurma={idTurma}
+                  frequenciaMinima={relatorio.summary.frequencia_minima ?? 75}
+                />
               ))}
             </div>
           </section>

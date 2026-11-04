@@ -70,12 +70,35 @@ const PLACEHOLDER_GROUPS = [
 
 type Handle = 'se' | 'move'
 
+const CENTRO_CANVAS = 50
+/** Distância (%) para “grudar” no centro */
+const SNAP_ENTRADA = 1.2
+/** Distância (%) do centro bruto para soltar o snap e continuar o arraste */
+const SNAP_SAIDA = 2.8
+
 interface CertificadoCanvasEditorProps {
   layout: LayoutCertificado
   onChange: (layout: LayoutCertificado) => void
   fundoUrl?: string | null
   templateId?: number | null
   sideSlot?: React.ReactNode
+}
+
+function aplicarSnapEixo(
+  centroBruto: number,
+  jaSnapped: boolean,
+): { centro: number; snapped: boolean } {
+  const distancia = Math.abs(centroBruto - CENTRO_CANVAS)
+  if (jaSnapped) {
+    if (distancia > SNAP_SAIDA) {
+      return { centro: centroBruto, snapped: false }
+    }
+    return { centro: CENTRO_CANVAS, snapped: true }
+  }
+  if (distancia <= SNAP_ENTRADA) {
+    return { centro: CENTRO_CANVAS, snapped: true }
+  }
+  return { centro: centroBruto, snapped: false }
 }
 
 export const CertificadoCanvasEditor: React.FC<CertificadoCanvasEditorProps> = ({
@@ -89,6 +112,7 @@ export const CertificadoCanvasEditor: React.FC<CertificadoCanvasEditorProps> = (
   const [editandoTextoId, setEditandoTextoId] = useState<string | null>(null)
   const [selectKey, setSelectKey] = useState(0)
   const [enviandoImagem, setEnviandoImagem] = useState(false)
+  const [guiasCentro, setGuiasCentro] = useState({ vertical: false, horizontal: false })
   const areaRef = useRef<HTMLDivElement>(null)
   const textoEditRef = useRef<HTMLTextAreaElement>(null)
   const layoutRef = useRef(layout)
@@ -99,6 +123,8 @@ export const CertificadoCanvasEditor: React.FC<CertificadoCanvasEditorProps> = (
     startX: number
     startY: number
     orig: ElementoLayout
+    snapX: boolean
+    snapY: boolean
   } | null>(null)
   const inputImagemRef = useRef<HTMLInputElement>(null)
 
@@ -299,12 +325,41 @@ export const CertificadoCanvasEditor: React.FC<CertificadoCanvasEditorProps> = (
       const orig = drag.orig
 
       if (drag.handle === 'move') {
-        atualizarElemento(drag.id, {
-          x: clamp(orig.x + dx, 0, 100 - Math.max(orig.w, 1)),
-          y: clamp(orig.y + dy, 0, 100 - (orig.tipo === 'linha' ? 0 : Math.max(orig.h, 1))),
+        const maxX = 100 - Math.max(orig.w, 1)
+        const maxY = 100 - (orig.tipo === 'linha' ? 0 : Math.max(orig.h, 1))
+        const xBruto = clamp(orig.x + dx, 0, maxX)
+        const yBruto = clamp(orig.y + dy, 0, maxY)
+        const altura = orig.tipo === 'linha' ? 0 : Math.max(orig.h, 0)
+
+        const snapHorizontal = aplicarSnapEixo(xBruto + orig.w / 2, drag.snapX)
+        const snapVertical = aplicarSnapEixo(yBruto + altura / 2, drag.snapY)
+
+        drag.snapX = snapHorizontal.snapped
+        drag.snapY = snapVertical.snapped
+
+        const x = clamp(snapHorizontal.centro - orig.w / 2, 0, maxX)
+        const y = clamp(snapVertical.centro - altura / 2, 0, maxY)
+
+        setGuiasCentro((atual) => {
+          if (
+            atual.vertical === snapHorizontal.snapped &&
+            atual.horizontal === snapVertical.snapped
+          ) {
+            return atual
+          }
+          return {
+            vertical: snapHorizontal.snapped,
+            horizontal: snapVertical.snapped,
+          }
         })
+
+        atualizarElemento(drag.id, { x, y })
         return
       }
+
+      setGuiasCentro((atual) =>
+        atual.vertical || atual.horizontal ? { vertical: false, horizontal: false } : atual,
+      )
 
       if (orig.tipo === 'linha') {
         atualizarElemento(drag.id, {
@@ -321,6 +376,7 @@ export const CertificadoCanvasEditor: React.FC<CertificadoCanvasEditorProps> = (
 
     const onUp = () => {
       dragRef.current = null
+      setGuiasCentro({ vertical: false, horizontal: false })
     }
 
     window.addEventListener('pointermove', onMove)
@@ -341,12 +397,15 @@ export const CertificadoCanvasEditor: React.FC<CertificadoCanvasEditorProps> = (
       setEditandoTextoId(null)
     }
     setSelecionadoId(id)
+    setGuiasCentro({ vertical: false, horizontal: false })
     dragRef.current = {
       id,
       handle,
       startX: e.clientX,
       startY: e.clientY,
       orig: { ...el },
+      snapX: false,
+      snapY: false,
     }
   }
 
@@ -539,6 +598,27 @@ export const CertificadoCanvasEditor: React.FC<CertificadoCanvasEditorProps> = (
                 <p className="rounded-full bg-white/90 px-4 py-2 text-xs font-medium text-zinc-400 shadow-sm">
                   Adicione texto, imagem ou formas para começar
                 </p>
+              </div>
+            )}
+
+            {(guiasCentro.vertical || guiasCentro.horizontal) && (
+              <div className="pointer-events-none absolute inset-0 z-30" aria-hidden>
+                {guiasCentro.vertical && (
+                  <div
+                    className="absolute top-0 bottom-0 left-1/2 w-0 -translate-x-1/2 border-l border-dashed border-indigo-500/80"
+                    style={{
+                      boxShadow: '0 0 0 1px rgba(255,255,255,0.55)',
+                    }}
+                  />
+                )}
+                {guiasCentro.horizontal && (
+                  <div
+                    className="absolute left-0 right-0 top-1/2 h-0 -translate-y-1/2 border-t border-dashed border-indigo-500/80"
+                    style={{
+                      boxShadow: '0 0 0 1px rgba(255,255,255,0.55)',
+                    }}
+                  />
+                )}
               </div>
             )}
 

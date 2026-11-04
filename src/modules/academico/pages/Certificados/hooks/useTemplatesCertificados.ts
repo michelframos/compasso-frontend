@@ -4,6 +4,7 @@ import { getErrorMessage } from '@/shared/lib/utils'
 import {
   atualizarTemplateCertificado,
   criarTemplateCertificado,
+  duplicarTemplateCertificado,
   enviarFundoTemplateCertificado,
   excluirTemplateCertificado,
   listarTemplatesCertificados,
@@ -15,6 +16,7 @@ export function useTemplatesCertificados() {
   const [templates, setTemplates] = useState<TemplateCertificado[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [salvando, setSalvando] = useState(false)
+  const [duplicandoId, setDuplicandoId] = useState<number | null>(null)
 
   const carregar = useCallback(async () => {
     setIsLoading(true)
@@ -75,5 +77,22 @@ export function useTemplatesCertificados() {
     }
   }
 
-  return { templates, isLoading, salvando, carregar, salvar, excluir }
+  const duplicar = async (id: number) => {
+    setDuplicandoId(id)
+    try {
+      const copia = await duplicarTemplateCertificado(id)
+      setTemplates((lista) =>
+        [copia, ...lista].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+      )
+      toast.success('Template duplicado.')
+      return copia
+    } catch (erro) {
+      toast.error(getErrorMessage(erro, 'Não foi possível duplicar o template.'))
+      return null
+    } finally {
+      setDuplicandoId(null)
+    }
+  }
+
+  return { templates, isLoading, salvando, duplicandoId, carregar, salvar, excluir, duplicar }
 }

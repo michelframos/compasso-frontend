@@ -444,6 +444,46 @@ export const TurmaForm: React.FC<TurmaFormProps> = ({ onClose, onSuccess, turma 
 
                   <div className="space-y-2">
 
+                    <Label htmlFor="frequencia_minima" className={`font-medium ml-1 ${errors.frequencia_minima ? 'text-rose-500' : 'text-zinc-700'}`}>
+
+                      Frequência mínima (%)
+
+                    </Label>
+
+                    <Input
+
+                      id="frequencia_minima"
+
+                      type="number"
+
+                      min={0}
+
+                      max={100}
+
+                      step="0.01"
+
+                      placeholder="Padrão da escola"
+
+                      {...register('frequencia_minima')}
+
+                      className={`h-11 rounded-xl focus-visible:ring-indigo-600 ${errors.frequencia_minima ? 'border-rose-500 focus-visible:ring-rose-500' : 'border-zinc-200'}`}
+
+                    />
+
+                    <p className="text-[11px] text-zinc-500 ml-1">
+
+                      Usa o padrão da escola (Configurações › Dados da Empresa) se vazio.
+
+                    </p>
+
+                    {errors.frequencia_minima && <p className="text-[11px] text-rose-500 ml-1">{errors.frequencia_minima.message}</p>}
+
+                  </div>
+
+
+
+                  <div className="space-y-2">
+
                     <Label htmlFor="status" className="text-zinc-700 font-medium ml-1">Status</Label>
 
                     <select

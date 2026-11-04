@@ -41,6 +41,13 @@ export async function excluirTemplateCertificado(id: number) {
   await api.delete(`/templates-certificados/${id}`)
 }
 
+export async function duplicarTemplateCertificado(id: number) {
+  const { data } = await api.post<{ data: TemplateCertificado }>(
+    `/templates-certificados/${id}/duplicar`,
+  )
+  return data.data
+}
+
 export async function enviarFundoTemplateCertificado(id: number, arquivo: File) {
   const form = new FormData()
   form.append('fundo', arquivo)

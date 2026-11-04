@@ -6,6 +6,7 @@ export interface Turma {
   id_nivel: number;
   id_professor: number | null;
   maximo_alunos: number;
+  frequencia_minima: number | null;
   descricao: string | null;
   observacoes: string | null;
   status: TurmaStatus;
