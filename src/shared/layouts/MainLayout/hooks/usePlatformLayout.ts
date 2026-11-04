@@ -3,7 +3,7 @@ import { useAuthStore } from '@/shared/store/useAuthStore'
 import { useLayoutStore } from '@/shared/store/useLayoutStore'
 import { logout as logoutApi } from '@/modules/core/api/auth'
 import { Building2, ClipboardList, CreditCard, LayoutDashboard, LayoutGrid, MessageSquareQuote, Settings } from 'lucide-react'
-import type { LayoutMenuItem } from './layoutTypes'
+import type { LayoutMenuItem, LayoutNavEntry } from './layoutTypes'
 
 export const usePlatformLayout = () => {
   const { user, clearAuth } = useAuthStore()
@@ -22,7 +22,7 @@ export const usePlatformLayout = () => {
     }
   }
 
-  const menuItems: LayoutMenuItem[] = [
+  const navEntries: LayoutNavEntry[] = [
     { icon: LayoutDashboard, path: '/platform', label: 'Início' },
     { icon: Building2, path: '/platform/instituicoes', label: 'Escolas' },
     { icon: CreditCard, path: '/platform/planos', label: 'Planos' },
@@ -49,7 +49,7 @@ export const usePlatformLayout = () => {
     isSwitching: false,
     handleLogout,
     handleSwitchTenant: async () => undefined,
-    menuItems,
+    navEntries,
     bottomMenuItems,
     isActive,
     isCollapsed,

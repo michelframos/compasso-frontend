@@ -9,6 +9,7 @@ import {
   SheetTrigger
 } from '@/shared/components/ui/sheet'
 import { Button } from '@/shared/components/ui/button'
+import { SidebarNav } from './SidebarNav'
 import { TenantSelector } from './TenantSelector'
 import type { useMainLayout } from '../hooks/useMainLayout'
 
@@ -20,7 +21,7 @@ interface MobileMenuProps {
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({ layout }) => {
   const {
-    menuItems,
+    navEntries,
     bottomMenuItems,
     isActive,
     tenant,
@@ -62,22 +63,8 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ layout }) => {
           </div>
         )}
 
-        <nav className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-1.5">
-          {menuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 p-3 rounded-full transition-all duration-200 ${isActive(item.path)
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100'
-                  : 'text-zinc-500 hover:text-indigo-600 hover:bg-zinc-50'
-                }`}
-            >
-              <item.icon className={`w-5 h-5 shrink-0 ${isActive(item.path) ? 'text-white' : ''}`} />
-              <span className="text-sm font-medium">
-                {item.label}
-              </span>
-            </Link>
-          ))}
+        <nav className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4">
+          <SidebarNav entries={navEntries} isActive={isActive} compact />
         </nav>
 
         <div className="shrink-0 p-4 pt-3 border-t border-zinc-100 flex flex-col gap-1.5">

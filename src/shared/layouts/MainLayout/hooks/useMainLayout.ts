@@ -26,9 +26,68 @@ import {
   CalendarOff,
   CalendarPlus,
   Megaphone,
+  BookOpen,
+  Wrench,
 } from 'lucide-react'
-import type { LayoutMenuItem } from './layoutTypes'
+import {
+  isLayoutMenuGroup,
+  type LayoutMenuItem,
+  type LayoutMenuLeaf,
+  type LayoutNavEntry,
+} from './layoutTypes'
 import { getHomePath } from '@/shared/lib/homePath'
+
+function leafVisivel(
+  item: LayoutMenuLeaf,
+  role: string | undefined,
+  modulos: string[],
+): boolean {
+  if (item.roles) {
+    const adminOk = role === 'admin' && !item.somenteRoles
+    const roleOk = adminOk || (role != null && item.roles.includes(role))
+    if (!roleOk) return false
+  }
+  if (item.modulo && !modulos.includes(item.modulo)) {
+    return false
+  }
+  return true
+}
+
+function grupoVisivel(
+  entry: LayoutNavEntry,
+  role: string | undefined,
+  modulos: string[],
+): boolean {
+  if (isLayoutMenuGroup(entry)) {
+    if (entry.roles) {
+      const adminOk = role === 'admin'
+      const roleOk = adminOk || (role != null && entry.roles.includes(role))
+      if (!roleOk) return false
+    }
+    if (entry.modulo && !modulos.includes(entry.modulo)) {
+      return false
+    }
+    return entry.children.some((child) => leafVisivel(child, role, modulos))
+  }
+  return leafVisivel(entry, role, modulos)
+}
+
+function filtrarNav(
+  entries: LayoutNavEntry[],
+  role: string | undefined,
+  modulos: string[],
+): LayoutNavEntry[] {
+  return entries
+    .filter((entry) => grupoVisivel(entry, role, modulos))
+    .map((entry) => {
+      if (!isLayoutMenuGroup(entry)) return entry
+      return {
+        ...entry,
+        children: entry.children.filter((child) => leafVisivel(child, role, modulos)),
+      }
+    })
+    .filter((entry) => !isLayoutMenuGroup(entry) || entry.children.length > 0)
+}
 
 export const useMainLayout = () => {
   const { user, tenant, tenants, setAuth, clearAuth } = useAuthStore()
@@ -74,50 +133,169 @@ export const useMainLayout = () => {
     }
   }
 
-  const allMenuItems: LayoutMenuItem[] = [
+  const allNavEntries: LayoutNavEntry[] = [
     { icon: LayoutDashboard, path: '/dashboard', label: 'Início', roles: ['admin', 'secretaria'] },
-    { icon: LayoutDashboard, path: '/professor/inicio', label: 'Início', roles: ['professor'], somenteRoles: true },
+    {
+      icon: LayoutDashboard,
+      path: '/professor/inicio',
+      label: 'Início',
+      roles: ['professor'],
+      somenteRoles: true,
+    },
     { icon: ClipboardList, path: '/agenda', label: 'Agenda', roles: ['admin', 'secretaria', 'professor'] },
-    { icon: Users, path: '/leads', label: 'Leads', roles: ['admin', 'secretaria'], modulo: 'leads' },
-    { icon: Users, path: '/alunos', label: 'Alunos', roles: ['admin', 'secretaria'] },
-    { icon: UserRoundPen, path: '/professores', label: 'Professores', roles: ['admin', 'secretaria'] },
-    { icon: Wallet, path: '/remuneracao', label: 'Remuneração', roles: ['admin'] },
-    { icon: NotebookText, path: '/cursos', label: 'Cursos', roles: ['admin', 'secretaria'] },
-    { icon: Layers, path: '/niveis', label: 'Níveis', roles: ['admin', 'secretaria'] },
-    { icon: GraduationCap, path: '/professor/turmas', label: 'Minhas turmas', roles: ['professor'], somenteRoles: true },
-    { icon: Users, path: '/professor/alunos', label: 'Meus alunos', roles: ['professor'], somenteRoles: true },
-    { icon: ClipboardCheck, path: '/professor/frequencia', label: 'Frequência', roles: ['professor'], somenteRoles: true },
-    { icon: Mic2, path: '/professor/apresentacoes', label: 'Apresentações', roles: ['professor'], somenteRoles: true, modulo: 'espetaculos' },
-    { icon: Wallet, path: '/professor/ganhos', label: 'Meus ganhos', roles: ['professor'], somenteRoles: true },
-    { icon: CalendarClock, path: '/professor/solicitacoes', label: 'Solicitações', roles: ['professor'], somenteRoles: true },
-    { icon: Megaphone, path: '/professor/avisos', label: 'Avisos', roles: ['professor'], somenteRoles: true },
-    { icon: GraduationCap, path: '/turmas', label: 'Turmas', roles: ['admin', 'secretaria'] },
-    { icon: ClipboardList, path: '/matriculas', label: 'Matrículas', roles: ['admin', 'secretaria'] },
-    { icon: Award, path: '/certificados', label: 'Certificados', roles: ['admin', 'secretaria'] },
-    { icon: CalendarOff, path: '/justificativas-faltas', label: 'Justificativas', roles: ['admin', 'secretaria', 'professor'] },
-    { icon: CalendarPlus, path: '/solicitacoes-reposicoes', label: 'Reposições', roles: ['admin', 'secretaria', 'professor'] },
-    { icon: CalendarClock, path: '/solicitacoes-aulas', label: 'Solicitações de aula', roles: ['admin', 'secretaria'] },
-    { icon: Megaphone, path: '/avisos', label: 'Avisos', roles: ['admin', 'secretaria'] },
-    { icon: TrendingUp, path: '/progressoes', label: 'Progressões', roles: ['admin', 'secretaria'], modulo: 'progressao' },
-    { icon: Star, path: '/espetaculos', label: 'Espetáculos', roles: ['admin', 'secretaria'], modulo: 'espetaculos' },
-    { icon: Mic2, path: '/apresentacoes', label: 'Apresentações', roles: ['admin', 'secretaria'], modulo: 'espetaculos' },
-    { icon: Music, path: '/instrumentos', label: 'Instrumentos', roles: ['admin', 'secretaria'], modulo: 'instrumentos' },
-    { icon: CreditCard, path: '/financeiro', label: 'Financeiro', roles: ['admin', 'secretaria'], modulo: 'financeiro' },
+    {
+      id: 'pessoas',
+      label: 'Pessoas',
+      icon: Users,
+      children: [
+        { icon: Users, path: '/leads', label: 'Leads', roles: ['admin', 'secretaria'], modulo: 'leads' },
+        { icon: Users, path: '/alunos', label: 'Alunos', roles: ['admin', 'secretaria'] },
+        { icon: UserRoundPen, path: '/professores', label: 'Professores', roles: ['admin', 'secretaria'] },
+        { icon: Wallet, path: '/remuneracao', label: 'Remuneração', roles: ['admin'] },
+      ],
+    },
+    {
+      id: 'academico',
+      label: 'Acadêmico',
+      icon: BookOpen,
+      children: [
+        { icon: NotebookText, path: '/cursos', label: 'Cursos', roles: ['admin', 'secretaria'] },
+        { icon: Layers, path: '/niveis', label: 'Níveis', roles: ['admin', 'secretaria'] },
+        { icon: GraduationCap, path: '/turmas', label: 'Turmas', roles: ['admin', 'secretaria'] },
+        { icon: ClipboardList, path: '/matriculas', label: 'Matrículas', roles: ['admin', 'secretaria'] },
+        { icon: Award, path: '/certificados', label: 'Certificados', roles: ['admin', 'secretaria'] },
+        {
+          icon: TrendingUp,
+          path: '/progressoes',
+          label: 'Progressões',
+          roles: ['admin', 'secretaria'],
+          modulo: 'progressao',
+        },
+      ],
+    },
+    {
+      id: 'minha-area',
+      label: 'Minha área',
+      icon: GraduationCap,
+      roles: ['professor'],
+      children: [
+        {
+          icon: GraduationCap,
+          path: '/professor/turmas',
+          label: 'Minhas turmas',
+          roles: ['professor'],
+          somenteRoles: true,
+        },
+        {
+          icon: Users,
+          path: '/professor/alunos',
+          label: 'Meus alunos',
+          roles: ['professor'],
+          somenteRoles: true,
+        },
+        {
+          icon: ClipboardCheck,
+          path: '/professor/frequencia',
+          label: 'Frequência',
+          roles: ['professor'],
+          somenteRoles: true,
+        },
+        {
+          icon: Mic2,
+          path: '/professor/apresentacoes',
+          label: 'Apresentações',
+          roles: ['professor'],
+          somenteRoles: true,
+          modulo: 'espetaculos',
+        },
+        {
+          icon: Wallet,
+          path: '/professor/ganhos',
+          label: 'Meus ganhos',
+          roles: ['professor'],
+          somenteRoles: true,
+        },
+        {
+          icon: CalendarClock,
+          path: '/professor/solicitacoes',
+          label: 'Solicitações',
+          roles: ['professor'],
+          somenteRoles: true,
+        },
+        {
+          icon: Megaphone,
+          path: '/professor/avisos',
+          label: 'Avisos',
+          roles: ['professor'],
+          somenteRoles: true,
+        },
+      ],
+    },
+    {
+      id: 'operacoes',
+      label: 'Operações',
+      icon: Wrench,
+      children: [
+        {
+          icon: CalendarOff,
+          path: '/justificativas-faltas',
+          label: 'Justificativas',
+          roles: ['admin', 'secretaria', 'professor'],
+        },
+        {
+          icon: CalendarPlus,
+          path: '/solicitacoes-reposicoes',
+          label: 'Reposições',
+          roles: ['admin', 'secretaria', 'professor'],
+        },
+        {
+          icon: CalendarClock,
+          path: '/solicitacoes-aulas',
+          label: 'Solicitações de aula',
+          roles: ['admin', 'secretaria'],
+        },
+        { icon: Megaphone, path: '/avisos', label: 'Avisos', roles: ['admin', 'secretaria'] },
+      ],
+    },
+    {
+      id: 'espetaculos',
+      label: 'Espetáculos',
+      icon: Star,
+      modulo: 'espetaculos',
+      children: [
+        {
+          icon: Star,
+          path: '/espetaculos',
+          label: 'Espetáculos',
+          roles: ['admin', 'secretaria'],
+          modulo: 'espetaculos',
+        },
+        {
+          icon: Mic2,
+          path: '/apresentacoes',
+          label: 'Apresentações',
+          roles: ['admin', 'secretaria'],
+          modulo: 'espetaculos',
+        },
+      ],
+    },
+    {
+      icon: Music,
+      path: '/instrumentos',
+      label: 'Instrumentos',
+      roles: ['admin', 'secretaria'],
+      modulo: 'instrumentos',
+    },
+    {
+      icon: CreditCard,
+      path: '/financeiro',
+      label: 'Financeiro',
+      roles: ['admin', 'secretaria'],
+      modulo: 'financeiro',
+    },
   ]
 
-
-  const menuItems = allMenuItems.filter(item => {
-    if (item.roles) {
-      const adminOk = user?.role === 'admin' && !item.somenteRoles
-      const roleOk = adminOk || (user?.role != null && item.roles.includes(user.role))
-      if (!roleOk) return false
-    }
-    if (item.modulo) {
-      const allowed = tenant?.modulos ?? []
-      if (!allowed.includes(item.modulo)) return false
-    }
-    return true
-  })
+  const navEntries = filtrarNav(allNavEntries, user?.role, tenant?.modulos ?? [])
 
   const bottomMenuItems: LayoutMenuItem[] = [
     ...(user?.is_super_admin
@@ -130,9 +308,9 @@ export const useMainLayout = () => {
   ]
 
   const isActive = (path: string) => {
-    if (path === '/') return location.pathname === '/';
-    if (path === '/dashboard') return location.pathname === '/dashboard' || location.pathname === '/';
-    return location.pathname.startsWith(path);
+    if (path === '/') return location.pathname === '/'
+    if (path === '/dashboard') return location.pathname === '/dashboard' || location.pathname === '/'
+    return location.pathname.startsWith(path)
   }
 
   return {
@@ -142,7 +320,7 @@ export const useMainLayout = () => {
     isSwitching,
     handleLogout,
     handleSwitchTenant,
-    menuItems,
+    navEntries,
     bottomMenuItems,
     isActive,
     isCollapsed,
