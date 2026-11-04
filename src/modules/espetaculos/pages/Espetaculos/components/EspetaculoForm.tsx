@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Loader2, Calendar, MapPin, Info, Music, FileText } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Loader2, Calendar, MapPin, Info, Music, FileText, Ticket } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
@@ -7,7 +7,10 @@ import { useEspetaculoForm } from '../hooks/useEspetaculoForm';
 import { useContratos } from '@/modules/financeiro';
 import type { Espetaculo } from '../types';
 import { EspetaculoApresentacoes } from './EspetaculoApresentacoes';
+import { EspetaculoIngressos } from './EspetaculoIngressos';
 import { useHasModulo } from '@/shared/hooks/useHasModulo';
+import { listarTemplatesIngresso } from '@/modules/bilheteria/api/templates';
+import type { TemplateIngresso } from '@/modules/bilheteria/types';
 
 interface EspetaculoFormProps {
   onClose: () => void;
@@ -17,12 +20,21 @@ interface EspetaculoFormProps {
 
 export const EspetaculoForm: React.FC<EspetaculoFormProps> = ({ onClose, onSuccess, espetaculo }) => {
   const hasFinanceiro = useHasModulo('financeiro');
-  const [activeTab, setActiveTab] = useState<'dados' | 'apresentacoes'>('dados');
+  const hasBilheteria = useHasModulo('bilheteria');
+  const [activeTab, setActiveTab] = useState<'dados' | 'apresentacoes' | 'ingressos'>('dados');
   const { form, onSubmit, isLoading, isFetchingFullData } = useEspetaculoForm(onSuccess, espetaculo);
   const { contratos } = useContratos();
   const { register, formState: { errors } } = form;
+  const [templates, setTemplates] = useState<TemplateIngresso[]>([]);
 
   const showTabs = !!espetaculo;
+
+  useEffect(() => {
+    if (!hasBilheteria) return;
+    void listarTemplatesIngresso()
+      .then((res) => setTemplates(res.data ?? []))
+      .catch(() => setTemplates([]));
+  }, [hasBilheteria]);
 
   if (isFetchingFullData) {
     return (
@@ -61,6 +73,19 @@ export const EspetaculoForm: React.FC<EspetaculoFormProps> = ({ onClose, onSucce
               <Music className="w-4 h-4" />
               Apresentações
             </button>
+            {hasBilheteria && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('ingressos')}
+                className={`px-4 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 hover:cursor-pointer ${activeTab === 'ingressos'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-zinc-400 hover:text-zinc-600'
+                  }`}
+              >
+                <Ticket className="w-4 h-4" />
+                Ingressos
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -120,6 +145,18 @@ export const EspetaculoForm: React.FC<EspetaculoFormProps> = ({ onClose, onSucce
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="hora_evento" className="font-medium ml-1 text-zinc-700">
+                    Hora do Evento
+                  </Label>
+                  <Input
+                    id="hora_evento"
+                    type="time"
+                    {...register('hora_evento')}
+                    className="h-11 rounded-xl border-zinc-200 focus-visible:ring-indigo-600"
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="local" className={`font-medium ml-1 ${errors.local ? 'text-rose-500' : 'text-zinc-700'}`}>
                     Local *
                   </Label>
@@ -134,6 +171,62 @@ export const EspetaculoForm: React.FC<EspetaculoFormProps> = ({ onClose, onSucce
                   </div>
                   {errors.local && <p className="text-[11px] text-rose-500 ml-1">{errors.local.message}</p>}
                 </div>
+
+                {hasBilheteria && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="valor_ingresso_padrao" className="font-medium ml-1 text-zinc-700">
+                        Valor padrão do ingresso
+                      </Label>
+                      <Input
+                        id="valor_ingresso_padrao"
+                        type="number"
+                        step="0.01"
+                        {...register('valor_ingresso_padrao', { valueAsNumber: true })}
+                        className="h-11 rounded-xl border-zinc-200 focus-visible:ring-indigo-600"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="id_template_ingresso" className="font-medium ml-1 text-zinc-700">
+                        Template de ingresso
+                      </Label>
+                      <select
+                        id="id_template_ingresso"
+                        {...register('id_template_ingresso', {
+                          setValueAs: (v) => (v === '' || v == null ? null : Number(v)),
+                        })}
+                        className="flex h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
+                      >
+                        <option value="">Nenhum</option>
+                        {templates.map((t) => (
+                          <option key={t.id} value={t.id}>{t.nome}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="validade_ingresso_inicio" className="font-medium ml-1 text-zinc-700">
+                        Validade ingresso (início)
+                      </Label>
+                      <Input
+                        id="validade_ingresso_inicio"
+                        type="datetime-local"
+                        {...register('validade_ingresso_inicio')}
+                        className="h-11 rounded-xl border-zinc-200"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="validade_ingresso_fim" className="font-medium ml-1 text-zinc-700">
+                        Validade ingresso (fim)
+                      </Label>
+                      <Input
+                        id="validade_ingresso_fim"
+                        type="datetime-local"
+                        {...register('validade_ingresso_fim')}
+                        className="h-11 rounded-xl border-zinc-200"
+                      />
+                    </div>
+                  </>
+                )}
 
                 {hasFinanceiro && (
                 <div className="space-y-2">
@@ -185,13 +278,21 @@ export const EspetaculoForm: React.FC<EspetaculoFormProps> = ({ onClose, onSucce
               </Button>
             </div>
           </form>
-        ) : (
+        ) : activeTab === 'apresentacoes' ? (
           <div className="p-8 space-y-6">
             <EspetaculoApresentacoes
               espetaculo={espetaculo || null}
               isLoading={isFetchingFullData}
             />
-            {/* Footer específico para as outras abas */}
+            <div className="pt-6 border-t border-zinc-100 flex justify-end gap-3">
+              <Button variant="ghost" type="button" onClick={onClose} className="rounded-full px-6 h-9 font-bold hover:cursor-pointer hover:bg-zinc-100">
+                Fechar
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-8 space-y-6">
+            <EspetaculoIngressos espetaculo={espetaculo || null} />
             <div className="pt-6 border-t border-zinc-100 flex justify-end gap-3">
               <Button variant="ghost" type="button" onClick={onClose} className="rounded-full px-6 h-9 font-bold hover:cursor-pointer hover:bg-zinc-100">
                 Fechar

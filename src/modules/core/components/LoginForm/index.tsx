@@ -26,19 +26,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
   const { register, handleSubmit, formState: { errors } } = form;
   const isPlatform = mode === 'platform';
   const isAluno = mode === 'aluno';
+  const isBilheteria = mode === 'bilheteria';
   const mostrarSeletorEscolas = isAluno && escolasPendentes.length > 1;
 
   const titulo = isPlatform
     ? 'Acesso da plataforma'
     : isAluno
       ? 'Área do aluno'
-      : 'Bem-vindo de volta';
+      : isBilheteria
+        ? 'Bilheteria'
+        : 'Bem-vindo de volta';
 
   const subtitulo = isPlatform
     ? 'Área restrita aos administradores do Compasso.'
     : isAluno
       ? 'Entre com seu e-mail e senha para acessar aulas, boletim e financeiro.'
-      : 'Informe o CNPJ da escola e suas credenciais para acessar.';
+      : isBilheteria
+        ? 'Painel de gestão de ingressos. Informe o CNPJ da escola e suas credenciais.'
+        : 'Informe o CNPJ da escola e suas credenciais para acessar.';
 
   return (
     <div className="space-y-8">
@@ -96,6 +101,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
               disabled={isLoading}
             />
           )}
+
 
           <CustomInput
             id="email"
@@ -163,7 +169,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
         </form>
       )}
 
-      {!isPlatform && !isAluno && (
+      {!isPlatform && !isAluno && !isBilheteria && (
         <p className="text-center text-sm text-zinc-500">
           Ainda não tem conta?{' '}
           <Link to="/criar-conta" className="text-indigo-600 hover:text-indigo-700 font-medium">
@@ -177,9 +183,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
           <Link to="/login" className="hover:text-zinc-600">Voltar ao login da escola</Link>
         ) : isAluno ? (
           <Link to="/login" className="hover:text-zinc-600">Acesso da escola / equipe</Link>
+        ) : isBilheteria ? (
+          <Link to="/login" className="hover:text-zinc-600">Voltar ao login da escola</Link>
         ) : (
           <>
             <Link to="/aluno/login" className="block hover:text-zinc-600">Sou aluno ou responsável</Link>
+            <Link to="/bilheteria/login" className="block hover:text-zinc-600">Painel de bilheteria</Link>
             <Link to="/platform/login" className="block hover:text-zinc-600">Acesso da plataforma</Link>
           </>
         )}

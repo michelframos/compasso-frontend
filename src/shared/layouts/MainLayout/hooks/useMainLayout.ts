@@ -28,6 +28,11 @@ import {
   Megaphone,
   BookOpen,
   Wrench,
+  Ticket,
+  QrCode,
+  Percent,
+  LayoutTemplate,
+  BarChart3,
 } from 'lucide-react'
 import {
   isLayoutMenuGroup,
@@ -280,6 +285,50 @@ export const useMainLayout = () => {
       ],
     },
     {
+      id: 'bilheteria',
+      label: 'Bilheteria',
+      icon: Ticket,
+      modulo: 'bilheteria',
+      roles: ['admin', 'secretaria'],
+      children: [
+        {
+          icon: Ticket,
+          path: '/bilheteria',
+          label: 'Ingressos',
+          roles: ['admin', 'secretaria'],
+          modulo: 'bilheteria',
+        },
+        {
+          icon: QrCode,
+          path: '/bilheteria/validacao',
+          label: 'Validação',
+          roles: ['admin', 'secretaria'],
+          modulo: 'bilheteria',
+        },
+        {
+          icon: Percent,
+          path: '/bilheteria/cupons',
+          label: 'Cupons',
+          roles: ['admin', 'secretaria'],
+          modulo: 'bilheteria',
+        },
+        {
+          icon: LayoutTemplate,
+          path: '/bilheteria/templates',
+          label: 'Templates',
+          roles: ['admin', 'secretaria'],
+          modulo: 'bilheteria',
+        },
+        {
+          icon: BarChart3,
+          path: '/bilheteria/relatorios',
+          label: 'Relatórios',
+          roles: ['admin', 'secretaria'],
+          modulo: 'bilheteria',
+        },
+      ],
+    },
+    {
       icon: Music,
       path: '/instrumentos',
       label: 'Instrumentos',
@@ -310,6 +359,12 @@ export const useMainLayout = () => {
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/'
     if (path === '/dashboard') return location.pathname === '/dashboard' || location.pathname === '/'
+    if (path === '/bilheteria') {
+      return (
+        location.pathname === '/bilheteria' ||
+        location.pathname.startsWith('/bilheteria/espetaculos/')
+      )
+    }
     return location.pathname.startsWith(path)
   }
 

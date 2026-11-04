@@ -1,0 +1,1 @@
+export { bilheteriaRoutes } from './routes'
