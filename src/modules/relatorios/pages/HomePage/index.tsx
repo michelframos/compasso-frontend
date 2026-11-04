@@ -9,6 +9,7 @@ import { FluxoRecebimentoChart } from '@/modules/relatorios/components/Dashboard
 import { ConversionFunnel } from '@/modules/relatorios/components/Dashboard/ConversionFunnel';
 import { DistributionChart } from '@/modules/relatorios/components/Dashboard/DistributionChart';
 import { OccupancyHeatmap } from '@/modules/relatorios/components/Dashboard/OccupancyHeatmap';
+import { PendenciasDoDia } from '@/modules/relatorios/components/Dashboard/PendenciasDoDia';
 import { Plus, AlertTriangle, TrendingUp, Wallet, LayoutDashboard, RefreshCw } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
@@ -32,22 +33,27 @@ const SectionError: React.FC<{ message: string; onRetry: () => void }> = ({ mess
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const hasRelatorios = useHasModulo('relatorios');
-  const hasFinanceiro = useHasModulo('financeiro');
   const {
     user,
     mes,
     setMes,
     iconMap,
+    hasFinanceiro,
+    hasLeads,
+    statsVisiveis,
     resumo,
     financeiro,
     operacional,
+    pendencias,
     refetchFinanceiro,
     refetchResumo,
     refetchOperacional,
+    refetchPendencias,
   } = useHomePage();
 
   const dataHoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '');
   const alunosAusentes = operacional.data?.alunosAusentes ?? [];
+  const nomeUsuario = user?.nome ?? user?.name;
 
   const canNavigateHref = (href?: string) => {
     if (!href) return false;
@@ -61,7 +67,7 @@ export const HomePage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-zinc-900">
-            Olá, <span className="text-indigo-600">{user?.name?.split(' ')[0]}</span>!
+            Olá, <span className="text-indigo-600">{nomeUsuario?.split(' ')[0]}</span>!
           </h1>
           <p className="text-zinc-500 mt-1 text-base">Veja o que está acontecendo hoje.</p>
         </div>
@@ -87,6 +93,14 @@ export const HomePage: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      <PendenciasDoDia
+        items={pendencias.data?.items ?? []}
+        isLoading={pendencias.isLoading}
+        error={pendencias.error}
+        onRetry={refetchPendencias}
+        canNavigateHref={canNavigateHref}
+      />
 
       {alunosAusentes.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
@@ -123,50 +137,20 @@ export const HomePage: React.FC = () => {
       )}
 
       {resumo.error && <SectionError message={resumo.error} onRetry={refetchResumo} />}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${statsVisiveis.length >= 5 ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}>
         {resumo.isLoading
-          ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[110px] rounded-2xl" />)
-          : (resumo.data?.stats ?? []).map((stat) => (
+          ? Array.from({ length: hasFinanceiro ? 5 : 2 }).map((_, i) => <Skeleton key={i} className="h-[110px] rounded-2xl" />)
+          : statsVisiveis.map((stat) => (
               <StatCard
                 key={stat.title}
                 title={stat.title}
                 value={stat.value}
                 icon={iconMap[stat.icon] || LayoutDashboard}
-                trend={stat.trend}
+                trend={stat.trend ?? undefined}
                 variant={stat.variant}
                 onClick={canNavigateHref(stat.href) ? () => navigate(stat.href!) : undefined}
               />
             ))}
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-xl font-black text-zinc-900">Saúde do Negócio</h2>
-        </div>
-        {financeiro.error && <SectionError message={financeiro.error} onRetry={refetchFinanceiro} />}
-        {financeiro.isLoading ? (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <Skeleton className="h-[350px] lg:col-span-2 rounded-2xl" />
-            <Skeleton className="h-[350px] rounded-2xl" />
-            <Skeleton className="h-[350px] rounded-2xl" />
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-              <div className="lg:col-span-2">
-                <RevenueChart data={financeiro.data?.revenueData ?? []} />
-              </div>
-              <div>
-                <InadimplenciaChart data={financeiro.data?.inadimplenciaData ?? []} />
-              </div>
-              <div>
-                <FluxoRecebimentoChart data={financeiro.data?.fluxoRecebimentoData ?? []} />
-              </div>
-            </div>
-            <OverdueAccounts items={financeiro.data?.inadimplenciaItens ?? []} onPaymentSuccess={refetchFinanceiro} />
-          </>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -186,10 +170,12 @@ export const HomePage: React.FC = () => {
                 birthdays={operacional.data?.aniversariantes ?? []}
                 highlightToday={mes === currentMonthKey()}
               />
-              {financeiro.isLoading ? (
-                <Skeleton className="h-[220px] rounded-2xl" />
-              ) : (
-                <RecentPayments payments={financeiro.data?.recentPayments ?? []} />
+              {hasFinanceiro && (
+                financeiro.isLoading ? (
+                  <Skeleton className="h-[220px] rounded-2xl" />
+                ) : (
+                  <RecentPayments payments={financeiro.data?.recentPayments ?? []} />
+                )
               )}
             </>
           )}
@@ -207,12 +193,44 @@ export const HomePage: React.FC = () => {
             </>
           ) : (
             <>
-              <ConversionFunnel data={operacional.data?.conversaoData ?? null} />
+              {hasLeads && <ConversionFunnel data={operacional.data?.conversaoData ?? null} />}
               <DistributionChart data={operacional.data?.distributionData ?? []} />
             </>
           )}
         </div>
       </div>
+
+      {hasFinanceiro && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Wallet className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-xl font-black text-zinc-900">Saúde do Negócio</h2>
+          </div>
+          {financeiro.error && <SectionError message={financeiro.error} onRetry={refetchFinanceiro} />}
+          {financeiro.isLoading ? (
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              <Skeleton className="h-[350px] lg:col-span-2 rounded-2xl" />
+              <Skeleton className="h-[350px] rounded-2xl" />
+              <Skeleton className="h-[350px] rounded-2xl" />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <div className="lg:col-span-2">
+                  <RevenueChart data={financeiro.data?.revenueData ?? []} />
+                </div>
+                <div>
+                  <InadimplenciaChart data={financeiro.data?.inadimplenciaData ?? []} />
+                </div>
+                <div>
+                  <FluxoRecebimentoChart data={financeiro.data?.fluxoRecebimentoData ?? []} />
+                </div>
+              </div>
+              <OverdueAccounts items={financeiro.data?.inadimplenciaItens ?? []} onPaymentSuccess={refetchFinanceiro} />
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 };
