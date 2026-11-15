@@ -1,7 +1,17 @@
 export { corePublicRoutes, coreRoutes, coreNotFoundRoute } from './routes'
 export { useUsuariosStore } from './store/useUsuariosStore'
 export type { Usuario } from './store/useUsuariosStore'
-export type { ConfiguracaoEmpresa, ConfiguracaoEmpresaFormData, Instituicao, AuthUser, AuthResponse, SwitchInstituicaoResponse, Perfil } from './types'
+export type {
+  ConfiguracaoEmpresa,
+  ConfiguracaoEmpresaFormData,
+  Instituicao,
+  AuthUser,
+  AuthResponse,
+  SwitchInstituicaoResponse,
+  Perfil,
+  ModoGeracaoMensalidades,
+  InicioParcelasMensalidade,
+} from './types'
 export * as authApi from './api/auth'
 export * as usersApi from './api/users'
 export * as configuracaoEmpresaApi from './api/configuracaoEmpresa'

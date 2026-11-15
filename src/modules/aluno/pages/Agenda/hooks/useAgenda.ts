@@ -41,6 +41,7 @@ export function useAgenda() {
   const [visao, setVisao] = useState<VisaoAgenda>('semana')
   const [ancora, setAncora] = useState(() => new Date())
   const [agenda, setAgenda] = useState<AgendaAluno | null>(null)
+  const [agendaErro, setAgendaErro] = useState(false)
   const [isLoading, setIsLoading] = useState(!aguardandoDependente)
   const [doCache, setDoCache] = useState(false)
 
@@ -51,6 +52,7 @@ export function useAgenda() {
   useEffect(() => {
     if (aguardandoDependente) {
       setAgenda(null)
+      setAgendaErro(false)
       setDoCache(false)
       setIsLoading(false)
       return
@@ -58,6 +60,7 @@ export function useAgenda() {
 
     let ativo = true
     setIsLoading(true)
+    setAgendaErro(false)
     const partes = [params.id_aluno, inicio, fim]
 
     getAgenda(inicio, fim, params.id_aluno)
@@ -65,6 +68,7 @@ export function useAgenda() {
         if (!ativo) return
         setAgenda(dados)
         setDoCache(false)
+        setAgendaErro(false)
         salvarCacheOffline(RECURSO, dados, partes)
       })
       .catch((erro) => {
@@ -73,10 +77,12 @@ export function useAgenda() {
         if (cache && (estaOffline() || offline)) {
           setAgenda(cache.dados)
           setDoCache(true)
+          setAgendaErro(false)
           return
         }
         setAgenda(null)
         setDoCache(false)
+        setAgendaErro(true)
         toast.error(getErrorMessage(erro, 'Não foi possível carregar a agenda.'))
       })
       .finally(() => {
@@ -98,6 +104,7 @@ export function useAgenda() {
     ancora,
     dias: janela.dias,
     agenda,
+    agendaErro,
     isLoading,
     aguardandoDependente,
     offline,

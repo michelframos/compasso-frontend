@@ -23,6 +23,55 @@ import { toast } from 'sonner';
 import { substituirPlaceholders } from '@/shared/lib/contrato-utils';
 import api from '@/shared/lib/axios';
 import { cn } from '@/shared/lib/utils';
+import { getConfiguracaoEmpresa } from '@/modules/core/api/configuracaoEmpresa';
+import { CurrencyInput } from '@/shared/components/ui/currency-input';
+import type { InicioParcelasMensalidade, ModoGeracaoMensalidades } from '@/modules/core';
+
+function dataInicioLote(dataBase: string, inicioParcelas: InicioParcelasMensalidade): string {
+  const base = new Date(`${dataBase.slice(0, 10)}T00:00:00`)
+  if (Number.isNaN(base.getTime())) return dataBase.slice(0, 10)
+  if (inicioParcelas === 'mes_seguinte') {
+    const next = new Date(base.getFullYear(), base.getMonth() + 1, 1)
+    const y = next.getFullYear()
+    const m = String(next.getMonth() + 1).padStart(2, '0')
+    const d = String(next.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+  return dataBase.slice(0, 10)
+}
+
+function inicioEfetivoDuracao(
+  dataInicioTurma: string | null | undefined,
+  dataMatricula: string,
+): string {
+  const matStr = dataMatricula.slice(0, 10)
+  const inicioTurmaStr = dataInicioTurma ? String(dataInicioTurma).slice(0, 10) : null
+  if (inicioTurmaStr && matStr < inicioTurmaStr) {
+    return inicioTurmaStr
+  }
+  return matStr
+}
+
+function calcularParcelasPorDuracao(
+  dataInicioTurma: string | null | undefined,
+  dataFimTurma: string | null | undefined,
+  dataMatricula: string,
+  inicioParcelas: InicioParcelasMensalidade = 'mes_matricula',
+): number | null {
+  if (!dataFimTurma) return null;
+  const fim = new Date(`${String(dataFimTurma).slice(0, 10)}T00:00:00`)
+  if (Number.isNaN(fim.getTime())) return null
+
+  const inicioLoteStr = dataInicioLote(inicioEfetivoDuracao(dataInicioTurma, dataMatricula), inicioParcelas)
+  const inicio = new Date(`${inicioLoteStr}T00:00:00`)
+  if (Number.isNaN(inicio.getTime()) || fim < inicio) return null
+
+  const months =
+    (fim.getFullYear() - inicio.getFullYear()) * 12 +
+    (fim.getMonth() - inicio.getMonth()) +
+    1
+  return Math.max(1, Math.min(24, months))
+}
 
 type OpcaoCurso = { id: number; nome: string }
 type OpcaoNivel = { id: number; nome: string; curso_id?: number | null }
@@ -53,7 +102,7 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
     onSuccess,
     { ...initialData, defaultTurmaId, defaultAlunoId, defaultLeadId }
   );
-  const { register, watch, control, formState: { errors } } = form;
+  const { register, watch, control, setValue, formState: { errors } } = form;
   const { alunos, fetchAlunos, isLoading: isLoadingAlunos } = useAlunos();
   const { turmas, fetchTurmas, isLoading: isLoadingTurmas } = useTurmas();
   const { contratos, fetchContratos } = useContratos();
@@ -62,6 +111,8 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
   const [niveis, setNiveis] = useState<OpcaoNivel[]>([]);
   const [professores, setProfessores] = useState<OpcaoProfessor[]>([]);
   const [preselectedAluno, setPreselectedAluno] = useState<Aluno | null>(null);
+  const [modoMensalidade, setModoMensalidade] = useState<ModoGeracaoMensalidades>('formulario');
+  const gerarMensalidades = watch('gerar_mensalidades');
   const turmaDetalheCache = useRef<Map<string, unknown>>(new Map());
   const cursoDetalheCache = useRef<Map<string, unknown>>(new Map());
   const alunoDetalheCache = useRef<Map<string, unknown>>(new Map());
@@ -150,6 +201,130 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
     alunoDetalheCache.current.set(alunoId, data);
     return data;
   };
+
+  const dataMatriculaWatch = watch('data');
+  const inicioParcelasWatch = watch('inicio_parcelas_mensalidade');
+
+  // Defaults da escola ao entrar em matrícula de curso (não reaplicar ao mudar a data —
+  // isso sobrescrevia a quantidade de parcelas editada pelo usuário, ex.: 5 → 12).
+  useEffect(() => {
+    if (!hasFinanceiro || isEdit || tipoMatricula !== 'curso') {
+      return;
+    }
+
+    setModoMensalidade('formulario');
+    let ativo = true;
+    getConfiguracaoEmpresa()
+      .then((empresa) => {
+        if (!ativo) return;
+        const inicioParcelas = (empresa.inicio_parcelas_mensalidade ?? 'mes_matricula') as InicioParcelasMensalidade;
+        const dataMatricula = form.getValues('data') || new Date().toISOString().split('T')[0];
+
+        if (!form.getFieldState('dia_vencimento').isDirty) {
+          setValue('dia_vencimento', Number(empresa.dia_vencimento_mensalidade ?? 10));
+        }
+        if (!form.getFieldState('quantidade_parcelas').isDirty) {
+          setValue('quantidade_parcelas', Number(empresa.quantidade_parcelas_mensalidade ?? 12));
+        }
+        if (!form.getFieldState('inicio_parcelas_mensalidade').isDirty) {
+          setValue('inicio_parcelas_mensalidade', inicioParcelas);
+        }
+        if (!form.getFieldState('data_inicio_mensalidades').isDirty) {
+          const inicioAtual = (form.getValues('inicio_parcelas_mensalidade') || inicioParcelas) as InicioParcelasMensalidade;
+          setValue('data_inicio_mensalidades', dataInicioLote(dataMatricula, inicioAtual));
+        }
+      })
+      .catch((err) => console.error('Erro ao carregar defaults de mensalidade:', err));
+
+    return () => { ativo = false; };
+  }, [hasFinanceiro, isEdit, tipoMatricula, form, setValue]);
+
+  // Em curso: só sincroniza a data de início das parcelas quando a data da matrícula muda.
+  useEffect(() => {
+    if (!hasFinanceiro || isEdit || tipoMatricula !== 'curso') return;
+    if (!dataMatriculaWatch) return;
+    if (form.getFieldState('data_inicio_mensalidades').isDirty) return;
+
+    const inicio = (inicioParcelasWatch || 'mes_matricula') as InicioParcelasMensalidade;
+    setValue('data_inicio_mensalidades', dataInicioLote(dataMatriculaWatch, inicio));
+  }, [hasFinanceiro, isEdit, tipoMatricula, dataMatriculaWatch, inicioParcelasWatch, form, setValue]);
+
+  // Política de mensalidades a partir da turma + escola
+  useEffect(() => {
+    if (!hasFinanceiro || isEdit) {
+      if (tipoMatricula !== 'curso') setModoMensalidade('formulario');
+      return;
+    }
+
+    if (tipoMatricula === 'curso') {
+      return;
+    }
+
+    if (tipoMatricula !== 'turma' || !selectedTurmaId) {
+      setModoMensalidade('formulario');
+      return;
+    }
+
+    let ativo = true;
+    const carregar = async () => {
+      try {
+        const [turmaRes, empresa] = await Promise.all([
+          api.get(`/turmas/${selectedTurmaId}`),
+          getConfiguracaoEmpresa(),
+        ]);
+        if (!ativo) return;
+        const turma = turmaRes.data.data || turmaRes.data;
+        const modo = (turma.modo_geracao_mensalidades
+          || empresa.modo_geracao_mensalidades
+          || 'formulario') as ModoGeracaoMensalidades;
+        setModoMensalidade(modo);
+
+        const valor = Number(turma.valor_mensalidade || 0);
+        const dia = Number(turma.dia_vencimento_mensalidade ?? empresa.dia_vencimento_mensalidade ?? 10);
+        const qtdFixa = Number(turma.quantidade_parcelas_mensalidade ?? empresa.quantidade_parcelas_mensalidade ?? 12);
+        const inicioParcelas = (turma.inicio_parcelas_mensalidade
+          || empresa.inicio_parcelas_mensalidade
+          || 'mes_matricula') as InicioParcelasMensalidade;
+        const dataMatricula = form.getValues('data') || new Date().toISOString().split('T')[0];
+        const qtdDuracao = calcularParcelasPorDuracao(
+          turma.data_inicio,
+          turma.data_fim,
+          dataMatricula,
+          inicioParcelas,
+        );
+        const qtd = modo === 'duracao_turma' && qtdDuracao != null ? qtdDuracao : qtdFixa;
+
+        // Em modo formulário, não sobrescrever campos que o usuário já editou.
+        const modoFormulario = modo === 'formulario';
+        if (!modoFormulario || !form.getFieldState('valor_mensalidade_geracao').isDirty) {
+          setValue('valor_mensalidade_geracao', valor);
+        }
+        if (!modoFormulario || !form.getFieldState('dia_vencimento').isDirty) {
+          setValue('dia_vencimento', dia);
+        }
+        if (!modoFormulario || !form.getFieldState('quantidade_parcelas').isDirty || modo === 'duracao_turma') {
+          setValue('quantidade_parcelas', qtd);
+        }
+        if (!modoFormulario || !form.getFieldState('inicio_parcelas_mensalidade').isDirty) {
+          setValue('inicio_parcelas_mensalidade', inicioParcelas);
+        }
+        const baseInicio =
+          modo === 'duracao_turma'
+            ? inicioEfetivoDuracao(turma.data_inicio, dataMatricula)
+            : dataMatricula;
+        if (!modoFormulario || !form.getFieldState('data_inicio_mensalidades').isDirty) {
+          setValue('data_inicio_mensalidades', dataInicioLote(baseInicio, inicioParcelas));
+        }
+        if ((modo === 'automatico' || modo === 'duracao_turma') && valor > 0) {
+          setValue('gerar_mensalidades', true);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar política de mensalidades:', err);
+      }
+    };
+    void carregar();
+    return () => { ativo = false; };
+  }, [hasFinanceiro, selectedTurmaId, isEdit, tipoMatricula, form, setValue, dataMatriculaWatch]);
 
   // Cascata de contratos — tipo=turma
   useEffect(() => {
@@ -627,6 +802,130 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
                     </div>
                   )}
                 </div>
+                {/* Geração de mensalidades (criação) */}
+                {hasFinanceiro && !isEdit && (
+                  (tipoMatricula === 'turma' && !!selectedTurmaId) || tipoMatricula === 'curso'
+                ) && (
+                  <div className="md:col-span-2 space-y-4 p-4 rounded-xl border border-zinc-100 bg-zinc-50/70">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-indigo-600" />
+                      <p className="text-sm font-bold text-zinc-900">Mensalidades</p>
+                    </div>
+                    {tipoMatricula === 'turma' && (modoMensalidade === 'automatico' || modoMensalidade === 'duracao_turma') ? (
+                      <div className="space-y-2 text-sm text-zinc-600">
+                        <p>
+                          {modoMensalidade === 'duracao_turma'
+                            ? `As mensalidades serão geradas automaticamente pelo período da turma (estimativa: ${watch('quantidade_parcelas') || '—'} parcela(s)).`
+                            : 'As mensalidades serão geradas automaticamente ao salvar, com o valor e o número fixo de parcelas da turma/escola.'}
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          {watch('inicio_parcelas_mensalidade') === 'mes_seguinte'
+                            ? 'Início das parcelas: mês seguinte à data da matrícula.'
+                            : 'Início das parcelas: mês da matrícula.'}
+                          {modoMensalidade === 'duracao_turma' && (
+                            <> Matrícula antes do início da turma: do início ao fim. Depois do início: só os meses restantes até a data fim. Sem data fim, usa o número fixo configurado.</>
+                          )}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <label className="flex items-start gap-3 text-sm text-zinc-700">
+                          <Controller
+                            name="gerar_mensalidades"
+                            control={control}
+                            render={({ field }) => (
+                              <input
+                                type="checkbox"
+                                className="mt-1"
+                                checked={Boolean(field.value)}
+                                onChange={(e) => field.onChange(e.target.checked)}
+                                onBlur={field.onBlur}
+                                ref={field.ref}
+                              />
+                            )}
+                          />
+                          <span>
+                            <span className="font-semibold">Gerar mensalidades agora</span>
+                            <span className="block text-xs text-zinc-500">
+                              {tipoMatricula === 'curso'
+                                ? 'Marque e informe o valor para criar as parcelas ao salvar.'
+                                : 'Cria o lote de parcelas ao salvar a matrícula.'}
+                            </span>
+                          </span>
+                        </label>
+                        {gerarMensalidades && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-zinc-700 font-medium ml-1">Valor (R$)</Label>
+                              <Controller
+                                name="valor_mensalidade_geracao"
+                                control={control}
+                                render={({ field }) => (
+                                  <CurrencyInput
+                                    value={Number(field.value || 0)}
+                                    onChange={field.onChange}
+                                    prefix="R$"
+                                    className="h-11 rounded-xl border-zinc-200"
+                                  />
+                                )}
+                              />
+                              {errors.valor_mensalidade_geracao && (
+                                <p className="text-[11px] text-rose-500 ml-1">
+                                  {errors.valor_mensalidade_geracao.message || 'Informe o valor da mensalidade'}
+                                </p>
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-zinc-700 font-medium ml-1">Parcelas</Label>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={24}
+                                className="h-11 rounded-xl"
+                                {...register('quantidade_parcelas', { valueAsNumber: true })}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-zinc-700 font-medium ml-1">Dia de vencimento</Label>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={31}
+                                className="h-11 rounded-xl"
+                                {...register('dia_vencimento', { valueAsNumber: true })}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-zinc-700 font-medium ml-1">Início das parcelas</Label>
+                              <select
+                                className="flex h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm"
+                                value={watch('inicio_parcelas_mensalidade') || 'mes_matricula'}
+                                onChange={(e) => {
+                                  const inicio = e.target.value as InicioParcelasMensalidade
+                                  const dataMatricula = form.getValues('data') || new Date().toISOString().split('T')[0]
+                                  setValue('inicio_parcelas_mensalidade', inicio)
+                                  setValue('data_inicio_mensalidades', dataInicioLote(dataMatricula, inicio))
+                                }}
+                              >
+                                <option value="mes_matricula">Mês da matrícula</option>
+                                <option value="mes_seguinte">Mês seguinte</option>
+                              </select>
+                              <p className="text-xs text-zinc-500 ml-1">
+                                {watch('inicio_parcelas_mensalidade') === 'mes_seguinte'
+                                  ? 'Recalcula o campo Início para o 1º dia do mês seguinte. Você pode ajustar a data manualmente.'
+                                  : 'Usa a data da matrícula como início. Você pode ajustar a data manualmente.'}
+                              </p>
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-zinc-700 font-medium ml-1">Início</Label>
+                              <Input type="date" className="h-11 rounded-xl" {...register('data_inicio_mensalidades')} />
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
                 {/* Motivo de Transferência */}
                 {showTransferReason && (
                   <div className="space-y-2 p-4 bg-amber-50 rounded-xl border border-amber-100 animate-in fade-in slide-in-from-top-2">

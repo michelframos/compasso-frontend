@@ -15,6 +15,10 @@ export interface Turma {
   data_fim: string | null;
   quantidade_aulas: number | null;
   valor_mensalidade: number | null;
+  modo_geracao_mensalidades: 'automatico' | 'formulario' | 'duracao_turma' | null;
+  dia_vencimento_mensalidade: number | null;
+  quantidade_parcelas_mensalidade: number | null;
+  inicio_parcelas_mensalidade: 'mes_matricula' | 'mes_seguinte' | null;
   percentual_comissao_especifico: number | null;
   valor_hora_aula_especifico: number | null;
   contrato_id: number | null;

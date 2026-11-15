@@ -8,11 +8,17 @@ import { Button } from '@/shared/components/ui/button';
 
 import { ContaModal } from '@/modules/financeiro';
 
-import { CreditCard, Calendar, Loader2, AlertCircle, DollarSign, Plus, FileText } from 'lucide-react';
+import { CreditCard, Calendar, Loader2, AlertCircle, DollarSign, Plus, FileText, Layers } from 'lucide-react';
 
 import { useCarneMatricula } from '../hooks/useCarneMatricula';
 
 import { CarneOptionsModal } from '@/shared/components/CarneOptionsModal';
+
+import { Input } from '@/shared/components/ui/input';
+
+import { Label } from '@/shared/components/ui/label';
+
+import { toast } from 'sonner';
 
 
 
@@ -182,13 +188,22 @@ function MensalidadeCard({ mensalidade }: { mensalidade: Mensalidade }) {
 
 export const MatriculaMensalidades: React.FC<MatriculaMensalidadesProps> = ({ matriculaId, alunoId }) => {
 
-  const { mensalidades, isLoading, fetchMensalidades } = useMatriculaMensalidades(matriculaId);
+  const { mensalidades, isLoading, isGenerating: isGeneratingLote, fetchMensalidades, gerarMensalidades } = useMatriculaMensalidades(matriculaId);
 
   const { emitirCarne, isGenerating } = useCarneMatricula();
 
   const [isFormOpen, setIsFormOpen] = React.useState(false);
 
   const [isCarneOptionsOpen, setIsCarneOptionsOpen] = React.useState(false);
+
+  const [isLoteOpen, setIsLoteOpen] = React.useState(false);
+
+  const [lote, setLote] = React.useState({
+    valor: 0,
+    quantidade_parcelas: 12,
+    dia_vencimento: 10,
+    data_inicio: new Date().toISOString().split('T')[0],
+  });
 
 
 
@@ -292,6 +307,22 @@ export const MatriculaMensalidades: React.FC<MatriculaMensalidadesProps> = ({ ma
 
             type="button"
 
+            onClick={() => setIsLoteOpen((v) => !v)}
+
+            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full h-9 px-4 gap-2 shadow-lg shadow-emerald-100 font-bold active:scale-95 transition-all text-xs hover:cursor-pointer w-full md:w-auto"
+
+          >
+
+            <Layers className="w-4 h-4" />
+
+            Gerar lote
+
+          </Button>
+
+          <Button
+
+            type="button"
+
             onClick={() => setIsFormOpen(true)}
 
             className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full h-9 px-4 gap-2 shadow-lg shadow-indigo-100 font-bold active:scale-95 transition-all text-xs hover:cursor-pointer w-full md:w-auto"
@@ -307,6 +338,77 @@ export const MatriculaMensalidades: React.FC<MatriculaMensalidadesProps> = ({ ma
         </div>
 
       </div>
+
+      {isLoteOpen && (
+        <div className="p-4 rounded-xl border border-zinc-100 bg-zinc-50/70 space-y-4">
+          <p className="text-sm font-bold text-zinc-900">Gerar lote de mensalidades</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Valor</Label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={lote.valor}
+                onChange={(e) => setLote((p) => ({ ...p, valor: Number(e.target.value) || 0 }))}
+                className="h-10 rounded-xl"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Parcelas</Label>
+              <Input
+                type="number"
+                min={1}
+                max={24}
+                value={lote.quantidade_parcelas}
+                onChange={(e) => setLote((p) => ({ ...p, quantidade_parcelas: Number(e.target.value) || 1 }))}
+                className="h-10 rounded-xl"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Dia vencimento</Label>
+              <Input
+                type="number"
+                min={1}
+                max={31}
+                value={lote.dia_vencimento}
+                onChange={(e) => setLote((p) => ({ ...p, dia_vencimento: Number(e.target.value) || 1 }))}
+                className="h-10 rounded-xl"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Início</Label>
+              <Input
+                type="date"
+                value={lote.data_inicio}
+                onChange={(e) => setLote((p) => ({ ...p, data_inicio: e.target.value }))}
+                className="h-10 rounded-xl"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" className="rounded-full" onClick={() => setIsLoteOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              disabled={isGeneratingLote || lote.valor <= 0}
+              className="rounded-full bg-emerald-600 hover:bg-emerald-700"
+              onClick={async () => {
+                const ok = await gerarMensalidades(lote)
+                if (ok) {
+                  toast.success('Mensalidades geradas.')
+                  setIsLoteOpen(false)
+                } else {
+                  toast.error('Não foi possível gerar o lote.')
+                }
+              }}
+            >
+              {isGeneratingLote ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Gerar'}
+            </Button>
+          </div>
+        </div>
+      )}
 
 
 

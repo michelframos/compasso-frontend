@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { Button } from '@/shared/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
+import { CustomModalGlobal } from '@/shared/components/CustomModalGlobal'
 import { Label } from '@/shared/components/ui/label'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { getErrorMessage } from '@/shared/lib/utils'
@@ -50,6 +49,7 @@ export const ReposicaoDialog: React.FC<ReposicaoDialogProps> = ({
   const [opcoes, setOpcoes] = useState<AulaReposicao[]>([])
   const [enviando, setEnviando] = useState(false)
   const aviso = textoRegras(regras)
+  const descricao = aviso ? `${titulo} · ${aviso}` : titulo
 
   const fechar = () => {
     setMotivo('')
@@ -73,9 +73,8 @@ export const ReposicaoDialog: React.FC<ReposicaoDialogProps> = ({
     }
   }, [aberto, idAula, params.id_aluno])
 
-  const enviar = async (event: React.FormEvent) => {
-    event.preventDefault()
-    if (!idAula) return
+  const enviar = async () => {
+    if (!idAula || motivo.trim() === '') return
 
     setEnviando(true)
     try {
@@ -96,48 +95,49 @@ export const ReposicaoDialog: React.FC<ReposicaoDialogProps> = ({
   }
 
   return (
-    <Dialog open={aberto} onOpenChange={(estaAberto) => !estaAberto && fechar()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Pedir reposição</DialogTitle>
-          <DialogDescription>
-            {titulo}
-            {aviso ? ` · ${aviso}` : ''}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={(event) => void enviar(event)} className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="motivo-reposicao">Motivo</Label>
-            <Textarea
-              id="motivo-reposicao"
-              required
-              maxLength={2000}
-              value={motivo}
-              onChange={(event) => setMotivo(event.target.value)}
-              placeholder="Por que você quer repor esta aula?"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="destino-reposicao">Aula para repor</Label>
-            <select
-              id="destino-reposicao"
-              value={destino}
-              onChange={(event) => setDestino(event.target.value)}
-              className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-800"
-            >
-              <option value="">A escola escolhe</option>
-              {opcoes.map((aula) => (
-                <option key={aula.id} value={aula.id}>
-                  {rotuloAula(aula)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <Button type="submit" disabled={enviando || motivo.trim() === ''} className="w-full rounded-full bg-indigo-600 hover:bg-indigo-700">
-            {enviando ? 'Enviando...' : 'Enviar'}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <CustomModalGlobal
+      open={aberto}
+      close={(open: boolean) => !open && fechar()}
+      onClose={fechar}
+      onConfirm={() => void enviar()}
+      isLoading={enviando}
+      firsChunkTitle="Pedir"
+      secondChunkTitle="reposição"
+      colorSecondChunkTitle="text-indigo-600"
+      titleDescription={descricao}
+      textConfirmButton={enviando ? 'Enviando...' : 'Enviar'}
+      loadingText="Enviando..."
+    >
+      <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="motivo-reposicao" className="text-zinc-700 font-medium ml-1">Motivo</Label>
+          <Textarea
+            id="motivo-reposicao"
+            required
+            maxLength={2000}
+            value={motivo}
+            onChange={(event) => setMotivo(event.target.value)}
+            placeholder="Por que você quer repor esta aula?"
+            className="rounded-xl min-h-[100px]"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="destino-reposicao" className="text-zinc-700 font-medium ml-1">Aula para repor</Label>
+          <select
+            id="destino-reposicao"
+            value={destino}
+            onChange={(event) => setDestino(event.target.value)}
+            className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-800"
+          >
+            <option value="">A escola escolhe</option>
+            {opcoes.map((aula) => (
+              <option key={aula.id} value={aula.id}>
+                {rotuloAula(aula)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </CustomModalGlobal>
   )
 }

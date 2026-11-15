@@ -3,6 +3,7 @@ import type { FC } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/shared/lib/utils";
 
 export interface CustomModalGlobalProps {
     open?: boolean;
@@ -21,6 +22,7 @@ export interface CustomModalGlobalProps {
     textConfirmButton?: string;
     colorConfirmButton?: string;
     loadingText?: string;
+    contentClassName?: string;
 }
 
 export const CustomModalGlobal: FC<CustomModalGlobalProps> = ({
@@ -30,7 +32,7 @@ export const CustomModalGlobal: FC<CustomModalGlobalProps> = ({
     onConfirm,
     firsChunkTitle,
     secondChunkTitle,
-    colorSecondChunkTitle,
+    colorSecondChunkTitle = 'text-indigo-600',
     titleDescription,
     children,
     isLoading = false,
@@ -39,18 +41,26 @@ export const CustomModalGlobal: FC<CustomModalGlobalProps> = ({
     showConfirmButton = true,
     textConfirmButton = 'Salvar',
     colorConfirmButton = 'bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-10 h-9 font-bold shadow-lg shadow-indigo-100 transition-all hover:cursor-pointer active:scale-95',
-    loadingText = 'Salvando...'
+    loadingText = 'Salvando...',
+    contentClassName,
 }) => {
     return (
         <Dialog open={open} onOpenChange={close}>
-            <DialogContent className="sm:max-w-[500px] rounded-[32px] flex flex-col max-h-[90vh] overflow-hidden p-0 border-none shadow-2xl">
+            <DialogContent className={cn(
+                'sm:max-w-[500px] rounded-[32px] flex flex-col max-h-[90vh] overflow-hidden p-0 border-none shadow-2xl',
+                contentClassName,
+            )}>
                 <DialogHeader className="bg-indigo-50/50 border-b border-indigo-100 shrink-0 p-8 pb-4">
                     <DialogTitle className="text-2xl font-bold text-zinc-900">
-                        {firsChunkTitle} <span className={colorSecondChunkTitle}>{secondChunkTitle}</span>
+                        {firsChunkTitle}{secondChunkTitle ? <>{' '}<span className={colorSecondChunkTitle}>{secondChunkTitle}</span></> : null}
                     </DialogTitle>
-                    <DialogDescription className="text-zinc-500">
-                        {titleDescription}
-                    </DialogDescription>
+                    {titleDescription ? (
+                        <DialogDescription className="text-zinc-500">
+                            {titleDescription}
+                        </DialogDescription>
+                    ) : (
+                        <DialogDescription className="sr-only">{firsChunkTitle}</DialogDescription>
+                    )}
                 </DialogHeader>
                 {children}
                 <DialogFooter className="bg-indigo-50/50 border-t border-indigo-100 shrink-0 p-8 pt-4">

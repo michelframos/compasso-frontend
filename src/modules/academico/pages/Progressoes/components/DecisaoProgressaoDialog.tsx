@@ -1,10 +1,16 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { AlertTriangle, ArrowRight, Check } from 'lucide-react'
 import { CustomModalGlobal } from '@/shared/components/CustomModalGlobal'
 import { Label } from '@/shared/components/ui/label'
 import { Textarea } from '@/shared/components/ui/textarea'
 import type { ModoDecisao } from '../hooks/useProgressoes'
 import type { DecisaoProgressaoPayload, SugestaoProgressao } from '../types'
+import { useHasModulo } from '@/shared/hooks/useHasModulo'
+import {
+  MensalidadeOpcoesMudanca,
+  type MensalidadeOpcoesMudancaValues,
+} from '../../Matriculas/components/MensalidadeOpcoesMudanca'
+import { getConfiguracaoEmpresa } from '@/modules/core/api/configuracaoEmpresa'
 
 interface DecisaoProgressaoDialogProps {
   sugestao: SugestaoProgressao | null
@@ -21,13 +27,68 @@ export const DecisaoProgressaoDialog: React.FC<DecisaoProgressaoDialogProps> = (
   onFechar,
   onConfirmar,
 }) => {
+  const hasFinanceiro = useHasModulo('financeiro')
   const [idTurmaDestino, setIdTurmaDestino] = useState<number | null>(null)
   const [motivo, setMotivo] = useState('')
   const [erro, setErro] = useState<string | null>(null)
+  const [opcoesMensalidade, setOpcoesMensalidade] = useState<MensalidadeOpcoesMudancaValues>({
+    reajustar_mensalidades: false,
+    gerar_novas_mensalidades: false,
+    valor_mensalidade_geracao: 0,
+    quantidade_parcelas: 12,
+    dia_vencimento: 10,
+    data_inicio_mensalidades: new Date().toISOString().split('T')[0],
+  })
 
   const aprovando = modo === 'aprovada'
   const porTurma = sugestao?.matricula?.tipo === 'turma'
   const turmas = sugestao?.turmas_destino ?? []
+  const turmaSelecionada = turmas.find((t) => t.id === idTurmaDestino)
+
+  useEffect(() => {
+    setIdTurmaDestino(null)
+    setMotivo('')
+    setErro(null)
+    setOpcoesMensalidade({
+      reajustar_mensalidades: false,
+      gerar_novas_mensalidades: false,
+      valor_mensalidade_geracao: 0,
+      quantidade_parcelas: 12,
+      dia_vencimento: 10,
+      data_inicio_mensalidades: new Date().toISOString().split('T')[0],
+    })
+  }, [sugestao?.id, modo])
+
+  useEffect(() => {
+    if (!hasFinanceiro || !turmaSelecionada) return
+
+    let ativo = true
+    const carregar = async () => {
+      try {
+        const empresa = await getConfiguracaoEmpresa()
+        if (!ativo) return
+        setOpcoesMensalidade((prev) => ({
+          ...prev,
+          valor_mensalidade_geracao: Number(turmaSelecionada.valor_mensalidade || 0),
+          dia_vencimento: Number(
+            turmaSelecionada.dia_vencimento_mensalidade ?? empresa.dia_vencimento_mensalidade ?? prev.dia_vencimento,
+          ),
+          quantidade_parcelas: Number(
+            turmaSelecionada.quantidade_parcelas_mensalidade
+              ?? empresa.quantidade_parcelas_mensalidade
+              ?? prev.quantidade_parcelas,
+          ),
+        }))
+      } catch {
+        setOpcoesMensalidade((prev) => ({
+          ...prev,
+          valor_mensalidade_geracao: Number(turmaSelecionada.valor_mensalidade || 0),
+        }))
+      }
+    }
+    void carregar()
+    return () => { ativo = false }
+  }, [hasFinanceiro, turmaSelecionada])
 
   const confirmar = () => {
     if (!sugestao) return
@@ -40,11 +101,24 @@ export const DecisaoProgressaoDialog: React.FC<DecisaoProgressaoDialogProps> = (
       return
     }
 
-    onConfirmar({
+    const payload: DecisaoProgressaoPayload = {
       decisao: modo,
       id_turma_destino: aprovando && porTurma ? idTurmaDestino : null,
       motivo_decisao: motivo.trim() || null,
-    })
+    }
+
+    if (aprovando && porTurma && hasFinanceiro) {
+      payload.reajustar_mensalidades = opcoesMensalidade.reajustar_mensalidades
+      payload.gerar_novas_mensalidades = opcoesMensalidade.gerar_novas_mensalidades
+      if (opcoesMensalidade.reajustar_mensalidades || opcoesMensalidade.gerar_novas_mensalidades) {
+        payload.valor_mensalidade_geracao = opcoesMensalidade.valor_mensalidade_geracao
+        payload.quantidade_parcelas = opcoesMensalidade.quantidade_parcelas
+        payload.dia_vencimento = opcoesMensalidade.dia_vencimento
+        payload.data_inicio_mensalidades = opcoesMensalidade.data_inicio_mensalidades
+      }
+    }
+
+    onConfirmar(payload)
   }
 
   return (
@@ -112,6 +186,7 @@ export const DecisaoProgressaoDialog: React.FC<DecisaoProgressaoDialogProps> = (
                           <p className="text-[11px] text-zinc-500">
                             Prof. {turma.professor ?? '—'} · {turma.alunos_vigentes}/{turma.maximo_alunos} alunos
                             {lotada && ' · lotada'}
+                            {turma.valor_mensalidade != null && ` · R$ ${Number(turma.valor_mensalidade).toFixed(2)}`}
                           </p>
                         </div>
                         {ativa && <Check className="w-4 h-4 text-indigo-600 shrink-0" />}
@@ -121,6 +196,15 @@ export const DecisaoProgressaoDialog: React.FC<DecisaoProgressaoDialogProps> = (
                 </div>
               )}
             </div>
+          )}
+
+          {aprovando && porTurma && hasFinanceiro && idTurmaDestino && (
+            <MensalidadeOpcoesMudanca
+              values={opcoesMensalidade}
+              onChange={(patch) => setOpcoesMensalidade((prev) => ({ ...prev, ...patch }))}
+              valorDestino={turmaSelecionada?.valor_mensalidade}
+              disabled={isSaving}
+            />
           )}
 
           <div className="space-y-2">
