@@ -295,24 +295,25 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
         const qtd = modo === 'duracao_turma' && qtdDuracao != null ? qtdDuracao : qtdFixa;
 
         // Em modo formulário, não sobrescrever campos que o usuário já editou.
-        const modoFormulario = modo === 'formulario';
-        if (!modoFormulario || !form.getFieldState('valor_mensalidade_geracao').isDirty) {
+        // Em duração da turma, a quantidade precisa recalcular com a data da matrícula.
+        const preservarEdicaoFormulario = modo === 'formulario';
+        if (!preservarEdicaoFormulario || !form.getFieldState('valor_mensalidade_geracao').isDirty) {
           setValue('valor_mensalidade_geracao', valor);
         }
-        if (!modoFormulario || !form.getFieldState('dia_vencimento').isDirty) {
+        if (!preservarEdicaoFormulario || !form.getFieldState('dia_vencimento').isDirty) {
           setValue('dia_vencimento', dia);
         }
-        if (!modoFormulario || !form.getFieldState('quantidade_parcelas').isDirty || modo === 'duracao_turma') {
+        if (modo === 'duracao_turma' || !preservarEdicaoFormulario || !form.getFieldState('quantidade_parcelas').isDirty) {
           setValue('quantidade_parcelas', qtd);
         }
-        if (!modoFormulario || !form.getFieldState('inicio_parcelas_mensalidade').isDirty) {
+        if (!preservarEdicaoFormulario || !form.getFieldState('inicio_parcelas_mensalidade').isDirty) {
           setValue('inicio_parcelas_mensalidade', inicioParcelas);
         }
         const baseInicio =
           modo === 'duracao_turma'
             ? inicioEfetivoDuracao(turma.data_inicio, dataMatricula)
             : dataMatricula;
-        if (!modoFormulario || !form.getFieldState('data_inicio_mensalidades').isDirty) {
+        if (!preservarEdicaoFormulario || !form.getFieldState('data_inicio_mensalidades').isDirty) {
           setValue('data_inicio_mensalidades', dataInicioLote(baseInicio, inicioParcelas));
         }
         if ((modo === 'automatico' || modo === 'duracao_turma') && valor > 0) {

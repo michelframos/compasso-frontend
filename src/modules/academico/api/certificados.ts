@@ -50,6 +50,36 @@ export async function emitirCertificadosLote(matriculaIds: number[]) {
   return data.data
 }
 
+export interface MatriculaEncerramentoCertificado {
+  id: number
+  aluno: { id: number; nome: string | null } | null
+  status: string
+  frequencia_percentual: number | null
+  frequencia_minima: number
+  carga_horaria: number
+  motivo?: string
+}
+
+export interface PreviewEncerramentoCertificados {
+  aptos: MatriculaEncerramentoCertificado[]
+  inaptos: MatriculaEncerramentoCertificado[]
+}
+
+export async function previewEncerramentoCertificados(idTurma: number) {
+  const { data } = await api.get<{ data: PreviewEncerramentoCertificados }>(
+    `/turmas/${idTurma}/encerramento-certificados`,
+  )
+  return data.data
+}
+
+export async function emitirEncerramentoCertificados(idTurma: number, matriculaIds: number[]) {
+  const { data } = await api.post<{ data: ResultadoEmissaoLote }>(
+    `/turmas/${idTurma}/encerramento-certificados`,
+    { matricula_ids: matriculaIds },
+  )
+  return data.data
+}
+
 export async function baixarPdfCertificadoStaff(id: number) {
   const { data } = await api.get<Blob>(`/certificados/${id}/pdf`, {
     responseType: 'blob',
