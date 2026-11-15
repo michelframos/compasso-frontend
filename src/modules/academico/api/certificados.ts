@@ -86,3 +86,10 @@ export async function baixarPdfCertificadoStaff(id: number) {
   })
   return data
 }
+
+export async function reemitirCertificado(id: number, idTemplate?: number | null) {
+  const { data } = await api.post<{ data: CertificadoStaff }>(`/certificados/${id}/reemitir`, {
+    id_template_certificado: idTemplate ?? null,
+  })
+  return data.data
+}
