@@ -7,6 +7,15 @@ import { AxiosError } from 'axios';
 import { useState, useEffect } from 'react';
 import { getErrorMessage } from '@/shared/lib/utils';
 
+const idOpcional = z.preprocess(
+  (valor) => {
+    if (valor === '' || valor === null || valor === undefined) return null
+    const numero = typeof valor === 'number' ? valor : Number(valor)
+    return Number.isNaN(numero) ? null : numero
+  },
+  z.number().nullable().optional(),
+)
+
 const espetaculoSchema = z.object({
   titulo: z.string().min(3, 'O título deve ter pelo menos 3 caracteres'),
   data_evento: z.string().min(10, 'A data é obrigatória'),
@@ -14,11 +23,18 @@ const espetaculoSchema = z.object({
   local: z.string().min(3, 'O local é obrigatório'),
   status: z.enum(['planejamento', 'aberto', 'concluido', 'cancelado']),
   observacoes: z.string().optional().or(z.literal('')),
-  contrato_id: z.number().nullable().optional(),
+  contrato_id: idOpcional,
   validade_ingresso_inicio: z.string().optional().or(z.literal('')),
   validade_ingresso_fim: z.string().optional().or(z.literal('')),
-  id_template_ingresso: z.number().nullable().optional(),
-  valor_ingresso_padrao: z.number().nullable().optional(),
+  id_template_ingresso: idOpcional,
+  valor_ingresso_padrao: z.preprocess(
+    (valor) => {
+      if (valor === '' || valor === null || valor === undefined) return null
+      const numero = typeof valor === 'number' ? valor : Number(valor)
+      return Number.isNaN(numero) ? null : numero
+    },
+    z.number().nullable().optional(),
+  ),
 });
 
 export type EspetaculoFormValues = z.infer<typeof espetaculoSchema>;
@@ -86,6 +102,7 @@ export const useEspetaculoForm = (onSuccess: (id?: number) => void, initialData?
     const payload = {
       ...values,
       hora_evento: values.hora_evento || null,
+      contrato_id: values.contrato_id || null,
       validade_ingresso_inicio: values.validade_ingresso_inicio || null,
       validade_ingresso_fim: values.validade_ingresso_fim || null,
       id_template_ingresso: values.id_template_ingresso || null,

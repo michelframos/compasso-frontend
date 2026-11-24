@@ -1,1 +1,1 @@
-export { bilheteriaRoutes } from './routes'
+export { bilheteriaPublicRoutes, bilheteriaRoutes } from './routes'

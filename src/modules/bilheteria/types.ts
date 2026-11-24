@@ -26,7 +26,35 @@ export interface Ingresso {
   comprador_nome?: string | null
   comprador_documento?: string | null
   utilizado_em?: string | null
+  url_publica?: string | null
   espetaculo?: EspetaculoResumo
+}
+
+export interface IngressoPublicoLayout {
+  html: string | null
+  largura_px: number
+  altura_px: number
+  fundo_url?: string | null
+}
+
+export interface IngressoPublico {
+  numero: string
+  codigo_qr: string
+  status: StatusIngresso
+  status_rotulo: string
+  cortesia: boolean
+  comprador_nome?: string | null
+  valor?: number | null
+  tem_template: boolean
+  escola?: string | null
+  qr_data_uri: string
+  layout: IngressoPublicoLayout
+  espetaculo?: {
+    titulo: string
+    data_evento?: string | null
+    hora_evento?: string | null
+    local?: string | null
+  } | null
 }
 
 export interface CupomIngresso {

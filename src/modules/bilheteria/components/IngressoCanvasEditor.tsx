@@ -83,7 +83,7 @@ export const IngressoCanvasEditor: React.FC<Props> = ({
   } | null>(null)
 
   const { w: baseW, h: baseH } = dimensoesPreviewPx(largura, altura, unidade)
-  const fitW = Math.min(baseW, 640)
+  const fitW = Math.min(baseW, 1100)
   const fitScale = fitW / baseW
   const displayW = fitW * zoom
   const displayH = baseH * fitScale * zoom
@@ -356,12 +356,12 @@ export const IngressoCanvasEditor: React.FC<Props> = ({
                 >
                   {el.tipo === 'texto' && (
                     <div
-                      className="h-full w-full overflow-hidden whitespace-pre-wrap leading-tight"
+                      className="h-full w-full overflow-visible whitespace-pre-wrap leading-tight"
                       style={{
                         color: el.cor,
                         fontWeight: el.fontePeso === 'bold' || el.fontePeso === 'extrabold' ? 700 : 400,
                         textAlign: el.alinhamento,
-                        fontSize: Math.max(8, el.fonteTamanho * fontScale * 0.55),
+                        fontSize: Math.max(8, el.fonteTamanho * fontScale),
                       }}
                     >
                       {el.texto || 'Texto'}

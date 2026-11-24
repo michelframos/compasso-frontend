@@ -1,24 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Gift, Loader2, Search, ShoppingCart, Ticket } from 'lucide-react'
+import { ArrowLeft, Copy, Download, Gift, Loader2, Search, ShoppingCart, Ticket } from 'lucide-react'
 import { toast } from 'sonner'
 import api from '@/shared/lib/axios'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { Card, CardContent } from '@/shared/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/shared/components/ui/dialog'
+import { CustomModalGlobal } from '@/shared/components/CustomModalGlobal'
 import { getErrorMessage } from '@/shared/lib/utils'
 import {
+  baixarPdfIngresso,
   gerarIngressos,
   listarIngressos,
   marcarCortesia,
+  urlPublicaIngresso,
   venderIngresso,
 } from '../api/ingressos'
 import type { Ingresso } from '../types'
@@ -49,6 +45,38 @@ export const EspetaculoIngressosPage: React.FC = () => {
   const [cupom, setCupom] = useState('')
   const [vendendo, setVendendo] = useState(false)
   const [cortesiaId, setCortesiaId] = useState<number | null>(null)
+  const [baixandoPdfId, setBaixandoPdfId] = useState<number | null>(null)
+
+  const copiarLink = async (ingresso: Ingresso) => {
+    const url = ingresso.url_publica
+      ? `${window.location.origin}${ingresso.url_publica}`
+      : urlPublicaIngresso(ingresso.codigo_qr)
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success('Link do ingresso copiado.')
+    } catch {
+      toast.error('Não foi possível copiar o link.')
+    }
+  }
+
+  const baixarPdf = async (ingresso: Ingresso) => {
+    setBaixandoPdfId(ingresso.id)
+    try {
+      const blob = await baixarPdfIngresso(ingresso.id)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `ingresso_${ingresso.numero}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Erro ao baixar PDF.'))
+    } finally {
+      setBaixandoPdfId(null)
+    }
+  }
 
   const carregar = useCallback(async () => {
     if (!idEspetaculo) return
@@ -125,11 +153,18 @@ export const EspetaculoIngressosPage: React.FC = () => {
     if (!vendaAlvo) return
     setVendendo(true)
     try {
-      await venderIngresso(vendaAlvo.id, {
+      const vendido = await venderIngresso(vendaAlvo.id, {
         comprador_nome: comprador.trim() || undefined,
         cupom: cupom.trim() || undefined,
       })
-      toast.success(`Ingresso ${vendaAlvo.numero} vendido. Aguardando pagamento.`)
+      toast.success(`Ingresso ${vendaAlvo.numero} vendido. Aguardando pagamento.`, {
+        action: {
+          label: 'Copiar link',
+          onClick: () => {
+            void copiarLink(vendido.data)
+          },
+        },
+      })
       setVendaAlvo(null)
       await carregar()
     } catch (err) {
@@ -142,8 +177,15 @@ export const EspetaculoIngressosPage: React.FC = () => {
   const handleCortesia = async (ingresso: Ingresso) => {
     setCortesiaId(ingresso.id)
     try {
-      await marcarCortesia(ingresso.id)
-      toast.success(`Ingresso ${ingresso.numero} marcado como cortesia.`)
+      const atualizado = await marcarCortesia(ingresso.id)
+      toast.success(`Ingresso ${ingresso.numero} marcado como cortesia.`, {
+        action: {
+          label: 'Copiar link',
+          onClick: () => {
+            void copiarLink(atualizado.data)
+          },
+        },
+      })
       await carregar()
     } catch (err) {
       toast.error(getErrorMessage(err, 'Erro ao marcar cortesia.'))
@@ -287,34 +329,58 @@ export const EspetaculoIngressosPage: React.FC = () => {
                       <td className="px-5 py-3 font-medium text-zinc-700">{formatMoney(ing.valor)}</td>
                       <td className="px-5 py-3 text-zinc-500">{ing.comprador_nome || '—'}</td>
                       <td className="px-5 py-3">
-                        {ing.status === 'disponivel' ? (
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => abrirVenda(ing)}
-                              className="h-8 rounded-full bg-indigo-600 px-3 text-xs font-bold hover:bg-indigo-700"
-                            >
-                              <ShoppingCart className="mr-1 h-3.5 w-3.5" />
-                              Vender
-                            </Button>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={baixandoPdfId === ing.id}
+                            onClick={() => void baixarPdf(ing)}
+                            className="h-8 rounded-full px-3 text-xs font-bold"
+                          >
+                            {baixandoPdfId === ing.id ? (
+                              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Download className="mr-1 h-3.5 w-3.5" />
+                            )}
+                            PDF
+                          </Button>
+                          {ing.status === 'disponivel' ? (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => abrirVenda(ing)}
+                                className="h-8 rounded-full bg-indigo-600 px-3 text-xs font-bold hover:bg-indigo-700"
+                              >
+                                <ShoppingCart className="mr-1 h-3.5 w-3.5" />
+                                Vender
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={cortesiaId === ing.id}
+                                onClick={() => void handleCortesia(ing)}
+                                className="h-8 rounded-full px-3 text-xs font-bold"
+                              >
+                                {cortesiaId === ing.id ? (
+                                  <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Gift className="mr-1 h-3.5 w-3.5" />
+                                )}
+                                Cortesia
+                              </Button>
+                            </>
+                          ) : (
                             <Button
                               size="sm"
                               variant="outline"
-                              disabled={cortesiaId === ing.id}
-                              onClick={() => handleCortesia(ing)}
+                              onClick={() => void copiarLink(ing)}
                               className="h-8 rounded-full px-3 text-xs font-bold"
                             >
-                              {cortesiaId === ing.id ? (
-                                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Gift className="mr-1 h-3.5 w-3.5" />
-                              )}
-                              Cortesia
+                              <Copy className="mr-1 h-3.5 w-3.5" />
+                              Link
                             </Button>
-                          </div>
-                        ) : (
-                          <span className="block text-right text-xs text-zinc-400">—</span>
-                        )}
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -325,52 +391,51 @@ export const EspetaculoIngressosPage: React.FC = () => {
         </Card>
       )}
 
-      <Dialog open={!!vendaAlvo} onOpenChange={(open) => !open && setVendaAlvo(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Vender ingresso {vendaAlvo?.numero}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <p className="text-sm text-zinc-500">
-              Valor atual: <strong className="text-zinc-800">{formatMoney(vendaAlvo?.valor ?? 0)}</strong>
-              . Uma conta a receber será criada no Financeiro.
-            </p>
-            <div className="space-y-2">
-              <Label htmlFor="comprador">Nome do comprador</Label>
-              <Input
-                id="comprador"
-                value={comprador}
-                onChange={(e) => setComprador(e.target.value)}
-                placeholder="Opcional"
-                className="rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cupom">Cupom de desconto</Label>
-              <Input
-                id="cupom"
-                value={cupom}
-                onChange={(e) => setCupom(e.target.value.toUpperCase())}
-                placeholder="Opcional"
-                className="rounded-xl uppercase"
-              />
-            </div>
+      <CustomModalGlobal
+        open={!!vendaAlvo}
+        close={(open: boolean) => !open && setVendaAlvo(null)}
+        onClose={() => setVendaAlvo(null)}
+        onConfirm={() => void confirmarVenda()}
+        isLoading={vendendo}
+        firsChunkTitle="Vender"
+        secondChunkTitle={`ingresso ${vendaAlvo?.numero ?? ''}`}
+        colorSecondChunkTitle="text-indigo-600"
+        titleDescription="Informe os dados opcionais da venda. Uma conta a receber será criada no Financeiro."
+        textConfirmButton="Confirmar venda"
+        loadingText="Confirmando..."
+        contentClassName="sm:max-w-md"
+      >
+        <div className="flex-1 space-y-5 overflow-y-auto px-6 py-6 sm:px-8">
+          <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-600">
+            Valor atual:{' '}
+            <strong className="font-bold text-zinc-900">{formatMoney(vendaAlvo?.valor ?? 0)}</strong>
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="ghost" onClick={() => setVendaAlvo(null)} className="rounded-full">
-              Cancelar
-            </Button>
-            <Button
-              onClick={confirmarVenda}
-              disabled={vendendo}
-              className="rounded-full bg-indigo-600 hover:bg-indigo-700"
-            >
-              {vendendo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Confirmar venda
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <div className="space-y-2">
+            <Label htmlFor="comprador" className="ml-1 font-medium text-zinc-700">
+              Nome do comprador
+            </Label>
+            <Input
+              id="comprador"
+              value={comprador}
+              onChange={(e) => setComprador(e.target.value)}
+              placeholder="Opcional"
+              className="h-11 rounded-xl border-zinc-200 bg-zinc-50 focus-visible:bg-white focus-visible:ring-indigo-600"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cupom" className="ml-1 font-medium text-zinc-700">
+              Cupom de desconto
+            </Label>
+            <Input
+              id="cupom"
+              value={cupom}
+              onChange={(e) => setCupom(e.target.value.toUpperCase())}
+              placeholder="Opcional"
+              className="h-11 rounded-xl border-zinc-200 bg-zinc-50 uppercase focus-visible:bg-white focus-visible:ring-indigo-600 placeholder:normal-case"
+            />
+          </div>
+        </div>
+      </CustomModalGlobal>
     </div>
   )
 }

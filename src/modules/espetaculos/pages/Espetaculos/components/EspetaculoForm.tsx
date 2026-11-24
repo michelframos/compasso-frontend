@@ -23,11 +23,16 @@ export const EspetaculoForm: React.FC<EspetaculoFormProps> = ({ onClose, onSucce
   const hasBilheteria = useHasModulo('bilheteria');
   const [activeTab, setActiveTab] = useState<'dados' | 'apresentacoes' | 'ingressos'>('dados');
   const { form, onSubmit, isLoading, isFetchingFullData } = useEspetaculoForm(onSuccess, espetaculo);
-  const { contratos } = useContratos();
+  const { contratos, fetchContratos } = useContratos();
   const { register, formState: { errors } } = form;
   const [templates, setTemplates] = useState<TemplateIngresso[]>([]);
 
   const showTabs = !!espetaculo;
+
+  useEffect(() => {
+    if (!hasFinanceiro) return;
+    void fetchContratos(1, 'nome', 'asc');
+  }, [hasFinanceiro, fetchContratos]);
 
   useEffect(() => {
     if (!hasBilheteria) return;
@@ -237,10 +242,15 @@ export const EspetaculoForm: React.FC<EspetaculoFormProps> = ({ onClose, onSucce
                     <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                     <select
                       id="contrato_id"
-                      {...register('contrato_id', { valueAsNumber: true })}
+                      {...register('contrato_id', {
+                        setValueAs: (valor) =>
+                          valor === '' || valor === null || valor === undefined
+                            ? null
+                            : Number(valor),
+                      })}
                       className={`flex h-11 w-full rounded-xl border bg-white pl-10 pr-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${errors.contrato_id ? 'border-rose-500' : 'border-zinc-200'}`}
                     >
-                      <option value="">Nenhum Contrato Vínculado</option>
+                      <option value="">Nenhum Contrato Vinculado</option>
                       {contratos.map(c => (
                         <option key={c.id} value={c.id}>{c.nome}</option>
                       ))}

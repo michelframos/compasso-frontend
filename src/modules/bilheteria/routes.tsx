@@ -11,6 +11,14 @@ function withBilheteria(element: RouteObject['element']): RouteObject['element']
   )
 }
 
+export const bilheteriaPublicRoutes: RouteObject[] = [
+  {
+    path: '/ingresso/:codigo',
+    element: lazyRoute(() => import('./pages/IngressoPublicoPage'), 'IngressoPublicoPage'),
+    handle: { title: 'Ingresso' },
+  },
+]
+
 export const bilheteriaRoutes: RouteObject[] = [
   {
     path: 'bilheteria',

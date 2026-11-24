@@ -1,5 +1,7 @@
 import api from '@/shared/lib/axios'
-import type { Ingresso, RelatorioIngressos } from '../types'
+import type { Ingresso, IngressoPublico, RelatorioIngressos } from '../types'
+
+const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/$/, '')
 
 export async function listarIngressos(params?: {
   id_espetaculo?: number
@@ -58,3 +60,28 @@ export async function relatorioIngressos(idEspetaculo: number) {
   const { data } = await api.get('/ingressos/relatorio', { params: { id_espetaculo: idEspetaculo } })
   return data as { data: RelatorioIngressos }
 }
+
+export async function baixarPdfIngresso(id: number) {
+  const { data } = await api.get<Blob>(`/ingressos/${id}/pdf`, { responseType: 'blob' })
+  return data
+}
+
+export function pathPublicoIngresso(codigoQr: string) {
+  return `/ingresso/${codigoQr}`
+}
+
+export function urlPublicaIngresso(codigoQr: string) {
+  return `${window.location.origin}${pathPublicoIngresso(codigoQr)}`
+}
+
+export async function obterIngressoPublico(codigo: string) {
+  const res = await fetch(`${apiBase}/public/ingressos/${encodeURIComponent(codigo)}`, {
+    headers: { Accept: 'application/json' },
+  })
+  if (!res.ok) {
+    throw Object.assign(new Error('Ingresso não encontrado.'), { status: res.status })
+  }
+  const json = (await res.json()) as { data: IngressoPublico }
+  return json.data
+}
+
