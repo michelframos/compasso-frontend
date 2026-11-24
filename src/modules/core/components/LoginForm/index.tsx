@@ -1,9 +1,12 @@
 import React from 'react';
 import { useLoginForm, type LoginMode } from './hooks/useLoginForm';
-import { AlertCircle, Building2, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CustomInput } from '@/shared/components/CustomInput';
 import { CustomLoadingButton } from '@/shared/components/CustomLoadingButton';
+import { AuthAlert } from '@/modules/core/components/auth/AuthAlert';
+import { PasswordField } from '@/modules/core/components/auth/PasswordField';
+import { OtpInput } from '@/modules/core/components/auth/OtpInput';
 
 interface LoginFormProps {
   mode?: LoginMode;
@@ -13,7 +16,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
   const {
     form,
     registerCnpj,
-    registerActivationCode,
     onSubmit,
     onResendCode,
     selecionarEscola,
@@ -23,11 +25,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
     escolasPendentes,
     error,
   } = useLoginForm(mode);
-  const { register, handleSubmit, formState: { errors } } = form;
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = form;
   const isPlatform = mode === 'platform';
   const isAluno = mode === 'aluno';
   const isBilheteria = mode === 'bilheteria';
   const mostrarSeletorEscolas = isAluno && escolasPendentes.length > 1;
+  const activationCode = watch('activation_code') ?? '';
 
   const titulo = isPlatform
     ? 'Acesso da plataforma'
@@ -47,18 +50,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
 
   return (
     <div className="space-y-8">
-      <div className="text-center md:text-left space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-zinc-900">{titulo}</h2>
+      <div className="space-y-2 text-center md:text-left">
+        <h2 className="text-3xl font-semibold tracking-tight text-[var(--auth-navy)]">{titulo}</h2>
         <p className="text-zinc-500">{subtitulo}</p>
       </div>
 
       {mostrarSeletorEscolas ? (
         <div className="space-y-4">
           {error && (
-            <div className="p-4 rounded-xl bg-indigo-50 text-indigo-900 text-sm flex items-start gap-3">
-              <Building2 className="w-5 h-5 shrink-0 text-indigo-600" />
+            <AuthAlert variant="info">
               <span>{error}</span>
-            </div>
+            </AuthAlert>
           )}
 
           <div className="space-y-3">
@@ -68,15 +70,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
                 type="button"
                 disabled={isLoading}
                 onClick={() => selecionarEscola(escola.slug)}
-                className="w-full flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 text-left transition hover:border-indigo-300 hover:bg-indigo-50/50 disabled:opacity-60"
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 text-left transition hover:border-[color-mix(in_srgb,var(--auth-magenta)_40%,transparent)] hover:bg-[color-mix(in_srgb,var(--auth-magenta)_6%,white)] disabled:opacity-60"
               >
                 <span className="min-w-0">
-                  <span className="block font-semibold text-zinc-900 truncate">{escola.nome_fantasia}</span>
+                  <span className="block truncate font-semibold text-zinc-900">{escola.nome_fantasia}</span>
                   {escola.razao_social && (
-                    <span className="block text-xs text-zinc-500 mt-0.5 truncate">{escola.razao_social}</span>
+                    <span className="mt-0.5 block truncate text-xs text-zinc-500">{escola.razao_social}</span>
                   )}
                 </span>
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin text-indigo-600 shrink-0" /> : null}
+                {isLoading ? <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--auth-magenta)]" /> : null}
               </button>
             ))}
           </div>
@@ -84,10 +86,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           {error && (
-            <div className="p-4 rounded-xl bg-destructive/10 text-destructive text-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-1">
-              <AlertCircle className="w-5 h-5 shrink-0" />
+            <AuthAlert>
               <span>{error}</span>
-            </div>
+            </AuthAlert>
           )}
 
           {!isPlatform && !isAluno && (
@@ -102,7 +103,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
             />
           )}
 
-
           <CustomInput
             id="email"
             label="E-mail"
@@ -114,18 +114,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
           />
 
           <div className="space-y-2">
-            <CustomInput
+            <PasswordField
               id="password"
               label="Senha"
-              type="password"
-              placeholder="••••••••"
               register={register}
               errors={errors}
               disabled={isLoading}
             />
             {!isPlatform && (
-              <div className="flex justify-end mt-1">
-                <Link to="/esqueci-minha-senha" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
+              <div className="mt-1 flex justify-end">
+                <Link to="/esqueci-minha-senha" className="auth-link text-xs">
                   Esqueceu a senha?
                 </Link>
               </div>
@@ -133,17 +131,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
           </div>
 
           {!isPlatform && !isAluno && needsActivation && (
-            <div className="space-y-2 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+            <div className="space-y-3 rounded-xl border border-[color-mix(in_srgb,var(--auth-magenta)_18%,transparent)] bg-[color-mix(in_srgb,var(--auth-magenta)_6%,white)] p-4">
               <p className="text-sm text-zinc-600">
                 Primeiro acesso: informe o código de ativação enviado para o e-mail do responsável.
               </p>
-              <CustomInput
+              <OtpInput
                 id="activation_code"
                 label="Código de ativação"
-                type="text"
-                placeholder="000000"
-                register={registerActivationCode}
-                errors={errors}
+                value={activationCode}
+                onChange={(value) => setValue('activation_code', value, { shouldValidate: true, shouldDirty: true })}
+                error={(errors.activation_code as { message?: string } | undefined)?.message}
                 disabled={isLoading}
               />
               <div className="flex justify-end">
@@ -151,7 +148,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
                   type="button"
                   onClick={onResendCode}
                   disabled={isResending || isLoading}
-                  className="text-xs text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+                  className="auth-link text-xs disabled:opacity-50"
                 >
                   {isResending ? 'Reenviando...' : 'Reenviar código'}
                 </button>
@@ -165,6 +162,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
             loadingText="Entrando..."
             type="submit"
             disabled={isLoading}
+            className="auth-cta"
           />
         </form>
       )}
@@ -172,27 +170,27 @@ export const LoginForm: React.FC<LoginFormProps> = ({ mode = 'escola' }) => {
       {!isPlatform && !isAluno && !isBilheteria && (
         <p className="text-center text-sm text-zinc-500">
           Ainda não tem conta?{' '}
-          <Link to="/criar-conta" className="text-indigo-600 hover:text-indigo-700 font-medium">
+          <Link to="/criar-conta" className="auth-link">
             Criar nova conta
           </Link>
         </p>
       )}
 
-      <p className="text-center text-xs text-zinc-400 space-y-1">
+      <nav className="auth-persona" aria-label="Outros acessos">
         {isPlatform ? (
-          <Link to="/login" className="hover:text-zinc-600">Voltar ao login da escola</Link>
+          <Link to="/login">Voltar ao login da escola</Link>
         ) : isAluno ? (
-          <Link to="/login" className="hover:text-zinc-600">Acesso da escola / equipe</Link>
+          <Link to="/login">Acesso da escola / equipe</Link>
         ) : isBilheteria ? (
-          <Link to="/login" className="hover:text-zinc-600">Voltar ao login da escola</Link>
+          <Link to="/login">Voltar ao login da escola</Link>
         ) : (
           <>
-            <Link to="/aluno/login" className="block hover:text-zinc-600">Sou aluno ou responsável</Link>
-            <Link to="/bilheteria/login" className="block hover:text-zinc-600">Painel de bilheteria</Link>
-            <Link to="/platform/login" className="block hover:text-zinc-600">Acesso da plataforma</Link>
+            <Link to="/aluno/login">Aluno ou responsável</Link>
+            <Link to="/bilheteria/login">Bilheteria</Link>
+            <Link to="/platform/login">Plataforma</Link>
           </>
         )}
-      </p>
+      </nav>
     </div>
   );
 };

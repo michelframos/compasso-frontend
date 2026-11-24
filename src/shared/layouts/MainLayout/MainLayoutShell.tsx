@@ -9,10 +9,10 @@ import {
   LogOut,
   Search,
   Bell,
-  Music2,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
+import { AppLogo } from '@/shared/components/AppLogo'
 import { MobileMenu } from './components/MobileMenu'
 import { SidebarNav } from './components/SidebarNav'
 import { TenantSelector } from './components/TenantSelector'
@@ -74,8 +74,8 @@ export const MainLayoutShell: React.FC<MainLayoutShellProps> = ({ layout, childr
       >
         <div className={`py-6 flex flex-col flex-1 min-h-0 ${isCollapsed ? 'items-center overflow-x-hidden px-0' : 'items-stretch px-4'}`}>
           <div className={`flex items-center mb-6 shrink-0 ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
-            <Link to={homePath} className="p-2 bg-indigo-600 rounded-full text-white shadow-lg shadow-indigo-100 flex items-center justify-center shrink-0">
-              <Music2 className="w-6 h-6" />
+            <Link to={homePath} className="shrink-0 transition-transform hover:scale-[1.03]">
+              <AppLogo size="md" variant="badge" />
             </Link>
             {!isCollapsed && (
               <span className="ml-3 font-bold text-lg text-zinc-900 truncate">Compasso</span>

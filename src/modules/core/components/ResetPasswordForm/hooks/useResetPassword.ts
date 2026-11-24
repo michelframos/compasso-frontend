@@ -21,6 +21,7 @@ type ResetPasswordValues = z.infer<typeof resetPasswordSchema>
 
 export const useResetPassword = (initialEmail: string = '') => {
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
 
   const form = useForm<ResetPasswordValues>({
@@ -35,13 +36,16 @@ export const useResetPassword = (initialEmail: string = '') => {
 
   const onSubmit = async (values: ResetPasswordValues) => {
     setIsLoading(true)
+    setError(null)
 
     try {
       const response = await resetPassword(values)
       toast.success(response.message || 'Senha redefinida com sucesso! Você já pode fazer login.')
       navigate('/login')
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, 'Erro ao redefinir a senha. O código pode ser inválido.'))
+      const message = getErrorMessage(err, 'Erro ao redefinir a senha. O código pode ser inválido.')
+      setError(message)
+      toast.error(message)
     } finally {
       setIsLoading(false)
     }
@@ -51,5 +55,6 @@ export const useResetPassword = (initialEmail: string = '') => {
     form,
     onSubmit,
     isLoading,
+    error,
   }
 }

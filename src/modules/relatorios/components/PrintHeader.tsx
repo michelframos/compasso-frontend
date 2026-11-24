@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { Music2 } from 'lucide-react';
-
 import { format } from 'date-fns';
 
 import { ptBR } from 'date-fns/locale';
+
+import { AppLogo } from '@/shared/components/AppLogo';
 
 
 
@@ -36,11 +36,8 @@ export const PrintHeader: React.FC<PrintHeaderProps> = ({ title, description, pr
 
         <div className="flex items-center gap-3">
 
-          <div className="p-2 bg-indigo-600 rounded-full text-white">
+          <AppLogo size="lg" variant="plain" />
 
-            <Music2 className="w-8 h-8" />
-
-          </div>
 
           <div>
 

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Loader2, Music2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
+import { AppLogo } from '@/shared/components/AppLogo'
 import { useAuthCallback } from './hooks/useAuthCallback'
 
 export const AuthCallbackPage: React.FC = () => {
@@ -8,9 +9,7 @@ export const AuthCallbackPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 px-4">
       <div className="flex items-center gap-2.5 mb-8">
-        <div className="p-2 bg-indigo-600 rounded-full text-white shadow-lg shadow-indigo-200">
-          <Music2 className="w-6 h-6" />
-        </div>
+        <AppLogo size="md" variant="badge" />
         <span className="font-bold text-xl text-zinc-900">Compasso</span>
       </div>
 

@@ -19,7 +19,7 @@ export const CustomInput = ({ id, label, type, placeholder, register, errors, di
                 id={id}
                 type={type}
                 placeholder={placeholder}
-                className={`h-12 px-5 rounded-[10px] border-zinc-200 bg-white focus-visible:ring-indigo-600 transition-all ${errors[id] ? 'border-destructive ring-destructive' : ''}`}
+                className={`auth-input h-12 px-5 rounded-[10px] border-zinc-200 bg-white focus-visible:ring-indigo-600 transition-all ${errors[id] ? 'border-destructive ring-destructive' : ''}`}
                 {...register(id)}
                 disabled={disabled}
             />

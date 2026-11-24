@@ -15,6 +15,7 @@ type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>
 export const useForgotPassword = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const form = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -26,13 +27,16 @@ export const useForgotPassword = () => {
   const onSubmit = async (values: ForgotPasswordValues) => {
     setIsLoading(true)
     setSuccess(false)
+    setError(null)
 
     try {
       const response = await forgotPassword(values.email)
       toast.success(response.message || 'Código enviado com sucesso!')
       setSuccess(true)
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, 'Erro ao solicitar recuperação de senha.'))
+      const message = getErrorMessage(err, 'Erro ao solicitar recuperação de senha.')
+      setError(message)
+      toast.error(message)
     } finally {
       setIsLoading(false)
     }
@@ -43,5 +47,6 @@ export const useForgotPassword = () => {
     onSubmit,
     isLoading,
     success,
+    error,
   }
 }

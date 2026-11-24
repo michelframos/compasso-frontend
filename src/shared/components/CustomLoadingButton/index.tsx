@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { Button } from "../ui/button";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/shared/lib/utils";
 
 export interface CustomLoadingButtonProps {
     isLoading: boolean;
@@ -8,6 +9,7 @@ export interface CustomLoadingButtonProps {
     type?: "button" | "submit" | "reset";
     text: string;
     loadingText: string;
+    className?: string;
 }
 
 export const CustomLoadingButton: FC<CustomLoadingButtonProps> = ({
@@ -15,13 +17,17 @@ export const CustomLoadingButton: FC<CustomLoadingButtonProps> = ({
     disabled,
     type,
     text,
-    loadingText
+    loadingText,
+    className,
 }) => {
     return (
         <Button
             type={type}
             disabled={disabled}
-            className="w-full h-12 rounded-[10px] bg-indigo-600 hover:bg-indigo-700 text-base font-bold shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]"
+            className={cn(
+                "w-full h-12 rounded-[10px] bg-indigo-600 hover:bg-indigo-700 text-base font-bold shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]",
+                className,
+            )}
         >
             {isLoading ? (
                 <>

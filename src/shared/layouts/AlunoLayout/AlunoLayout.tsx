@@ -12,12 +12,12 @@ import {
   Home,
   LogOut,
   Music,
-  Music2,
   Ruler,
   Wallet,
 } from 'lucide-react'
 import { logout as logoutApi } from '@/modules/core/api/auth'
 import { useDependentes } from '@/modules/aluno/hooks/useDependentes'
+import { AppLogo } from '@/shared/components/AppLogo'
 import { OfflineBanner } from '@/shared/components/OfflineBanner'
 import { PwaInstallPrompt } from '@/shared/components/PwaInstallPrompt'
 import { useHasModulo } from '@/shared/hooks/useHasModulo'
@@ -95,11 +95,8 @@ export const AlunoLayout: React.FC = () => {
     <div className="flex h-dvh overflow-hidden bg-zinc-50 text-zinc-900">
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-zinc-200 bg-white">
         <div className="flex items-center gap-3 px-4 py-6 shrink-0">
-          <Link
-            to="/aluno/inicio"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-100"
-          >
-            <Music2 className="h-5 w-5" />
+          <Link to="/aluno/inicio" className="shrink-0 transition-transform hover:scale-[1.03]">
+            <AppLogo size="md" variant="badge" />
           </Link>
           <span className="font-bold text-lg text-zinc-900 truncate">Compasso</span>
         </div>

@@ -21,7 +21,7 @@ export type LoginMode = 'escola' | 'platform' | 'aluno' | 'bilheteria'
 
 const credenciaisSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
+  password: z.string().min(1, 'Informe a senha'),
   activation_code: z.string().optional(),
 })
 
@@ -67,13 +67,6 @@ export const useLoginForm = (mode: LoginMode = 'escola') => {
     form.register(name, {
       onChange: (event: ChangeEvent<HTMLInputElement>) => {
         form.setValue(name, formatCnpj(event.target.value))
-      },
-    })
-
-  const registerActivationCode = (name: 'activation_code') =>
-    form.register(name, {
-      onChange: (event: ChangeEvent<HTMLInputElement>) => {
-        form.setValue(name, event.target.value.replace(/\D/g, '').slice(0, 6))
       },
     })
 
@@ -226,7 +219,6 @@ export const useLoginForm = (mode: LoginMode = 'escola') => {
   return {
     form,
     registerCnpj,
-    registerActivationCode,
     onSubmit,
     onResendCode,
     selecionarEscola,

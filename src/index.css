@@ -213,3 +213,163 @@
         }
     }
 }
+
+/* —— Auth shell (telas de autenticação) —— */
+.auth-shell {
+    --auth-coral: #ff7a45;
+    --auth-magenta: #d946a6;
+    --auth-navy: #2a1450;
+    --auth-deep: #1a0b33;
+    --auth-accent: var(--auth-magenta);
+    --auth-cta: linear-gradient(135deg, var(--auth-coral) 0%, var(--auth-magenta) 55%, #8b3dc9 100%);
+    --auth-panel: linear-gradient(155deg, #ff8a5c 0%, #e84393 38%, #6b2bb8 72%, var(--auth-navy) 100%);
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    color: var(--auth-navy);
+    background:
+        radial-gradient(ellipse 80% 50% at 100% -10%, color-mix(in srgb, var(--auth-coral) 18%, transparent), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 0% 100%, color-mix(in srgb, var(--auth-magenta) 12%, transparent), transparent 50%),
+        #faf8fc;
+}
+
+.auth-shell,
+.auth-shell * {
+    font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+.auth-shell--bilheteria {
+    --auth-accent: #d97706;
+    --auth-cta: linear-gradient(135deg, #f59e0b 0%, #d97706 55%, #b45309 100%);
+}
+
+.auth-panel {
+    background: var(--auth-panel);
+}
+
+.auth-panel__visual {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: url("/assets/bailarina.png");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    opacity: 0.95;
+    animation: auth-visual-float 8s ease-in-out infinite;
+}
+
+.auth-panel__glow {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+        linear-gradient(90deg, rgba(42, 20, 80, 0.55) 0%, rgba(42, 20, 80, 0.22) 42%, transparent 72%),
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.12), transparent 42%);
+    pointer-events: none;
+}
+
+@keyframes auth-visual-float {
+    0%, 100% { background-position: center 48%; }
+    50% { background-position: center 52%; }
+}
+
+.auth-chip {
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(8px);
+}
+
+.auth-form-col {
+    background: transparent;
+}
+
+.auth-shell .auth-cta,
+.auth-shell button[type="submit"] {
+    background-image: var(--auth-cta) !important;
+    background-color: transparent !important;
+    border: none;
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--auth-magenta) 28%, transparent) !important;
+    transition: transform 0.15s ease, filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-shell .auth-cta:hover:not(:disabled),
+.auth-shell button[type="submit"]:hover:not(:disabled) {
+    filter: brightness(1.05);
+    box-shadow: 0 14px 32px color-mix(in srgb, var(--auth-magenta) 36%, transparent) !important;
+}
+
+.auth-shell .auth-cta:active:not(:disabled),
+.auth-shell button[type="submit"]:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.auth-shell a.auth-link {
+    color: var(--auth-magenta);
+    font-weight: 600;
+}
+
+.auth-shell a.auth-link:hover {
+    color: color-mix(in srgb, var(--auth-magenta) 80%, var(--auth-navy));
+}
+
+.auth-shell .auth-input:focus-visible,
+.auth-shell input:focus-visible {
+    --tw-ring-color: color-mix(in srgb, var(--auth-magenta) 35%, transparent);
+    border-color: var(--auth-magenta);
+}
+
+.auth-persona {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.auth-persona a {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--auth-navy) 12%, transparent);
+    background: white;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--auth-navy) 72%, transparent);
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.auth-persona a:hover {
+    border-color: color-mix(in srgb, var(--auth-magenta) 40%, transparent);
+    color: var(--auth-navy);
+    background: color-mix(in srgb, var(--auth-magenta) 6%, white);
+}
+
+.auth-persona a[aria-current="page"] {
+    border-color: transparent;
+    background: color-mix(in srgb, var(--auth-magenta) 12%, white);
+    color: var(--auth-navy);
+}
+
+.auth-step-dots {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.auth-step-dots span {
+    height: 0.4rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--auth-navy) 12%, transparent);
+    transition: width 0.25s ease, background 0.25s ease;
+    width: 0.4rem;
+}
+
+.auth-step-dots span[data-active="true"] {
+    width: 1.6rem;
+    background: var(--auth-cta);
+}
+
+@media (max-width: 1023px) {
+    .auth-panel__visual {
+        display: none;
+    }
+}

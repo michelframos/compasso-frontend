@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Menu, Music2, LogOut } from 'lucide-react'
+import { Menu, LogOut } from 'lucide-react'
+import { AppLogo } from '@/shared/components/AppLogo'
 import {
   Sheet,
   SheetContent,
@@ -42,11 +43,8 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ layout }) => {
       </SheetTrigger>
       <SheetContent side="left" className="w-[300px] p-0 flex flex-col h-full max-h-dvh">
         <SheetHeader className="p-6 border-b border-zinc-100 flex-row items-center gap-3 space-y-0 shrink-0">
-          <Link
-            to={homePath}
-            className="p-2 bg-indigo-600 rounded-full text-white shadow-lg shadow-indigo-100 flex items-center justify-center shrink-0"
-          >
-            <Music2 className="w-6 h-6" />
+          <Link to={homePath} className="shrink-0">
+            <AppLogo size="md" variant="badge" />
           </Link>
           <SheetTitle className="font-bold text-lg text-zinc-900">Compasso</SheetTitle>
         </SheetHeader>

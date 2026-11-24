@@ -1,6 +1,7 @@
 import React from 'react'
-import { Building2, Loader2, Music2 } from 'lucide-react'
+import { Building2, Loader2 } from 'lucide-react'
 import { useSelecionarInstituicao } from './hooks/useSelecionarInstituicao'
+import { AppLogo } from '@/shared/components/AppLogo'
 import { Button } from '@/shared/components/ui/button'
 import { Link } from 'react-router-dom'
 
@@ -11,9 +12,7 @@ export const SelecionarInstituicaoPage: React.FC = () => {
     <div className="min-h-screen w-full flex items-center justify-center bg-zinc-50 p-6">
       <div className="w-full max-w-lg space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="text-center space-y-3">
-          <div className="inline-flex p-3 bg-indigo-600 rounded-full text-white shadow-lg shadow-indigo-100">
-            <Music2 className="w-7 h-7" />
-          </div>
+          <AppLogo className="mx-auto" size="xl" variant="badge" />
           <h1 className="text-2xl font-bold text-zinc-900">Selecione a instituição</h1>
           <p className="text-zinc-500 text-sm">
             Sua conta está vinculada a mais de uma escola. Escolha qual deseja acessar.
