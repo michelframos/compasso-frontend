@@ -936,6 +936,104 @@ export const TurmaForm: React.FC<TurmaFormProps> = ({ onClose, onSuccess, turma 
 
                   </div>
 
+                  <div className="space-y-2">
+
+                    <Label htmlFor="modo_geracao_mensalidades" className="text-zinc-700 font-medium ml-1">Geração de mensalidades</Label>
+
+                    <select
+
+                      id="modo_geracao_mensalidades"
+
+                      {...register('modo_geracao_mensalidades')}
+
+                      className="flex h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
+
+                    >
+
+                      <option value="herdar">Herdar da escola</option>
+
+                      <option value="automatico">Automático</option>
+
+                      <option value="formulario">Formulário na matrícula</option>
+
+                      <option value="duracao_turma">Duração da turma</option>
+
+                    </select>
+
+                  </div>
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="dia_vencimento_mensalidade" className="text-zinc-700 font-medium ml-1">Dia vencimento (override)</Label>
+
+                    <Input
+
+                      id="dia_vencimento_mensalidade"
+
+                      type="number"
+
+                      min={1}
+
+                      max={31}
+
+                      placeholder="Herdar"
+
+                      className="h-11 rounded-xl border-zinc-200"
+
+                      {...register('dia_vencimento_mensalidade')}
+
+                    />
+
+                  </div>
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="quantidade_parcelas_mensalidade" className="text-zinc-700 font-medium ml-1">Parcelas (override)</Label>
+
+                    <Input
+
+                      id="quantidade_parcelas_mensalidade"
+
+                      type="number"
+
+                      min={1}
+
+                      max={24}
+
+                      placeholder="Herdar"
+
+                      className="h-11 rounded-xl border-zinc-200"
+
+                      {...register('quantidade_parcelas_mensalidade')}
+
+                    />
+
+                  </div>
+
+                  <div className="space-y-2">
+
+                    <Label htmlFor="inicio_parcelas_mensalidade" className="text-zinc-700 font-medium ml-1">Início das parcelas</Label>
+
+                    <select
+
+                      id="inicio_parcelas_mensalidade"
+
+                      {...register('inicio_parcelas_mensalidade')}
+
+                      className="flex h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
+
+                    >
+
+                      <option value="herdar">Herdar da escola</option>
+
+                      <option value="mes_matricula">Mês da matrícula</option>
+
+                      <option value="mes_seguinte">Mês seguinte</option>
+
+                    </select>
+
+                  </div>
+
 
 
                   <div className="space-y-2">

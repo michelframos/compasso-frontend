@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 
-import { Plus, GraduationCap, Trash2, Edit, Search, ChevronUp, ChevronDown, ChevronsUpDown, RefreshCw, Loader2, Info, Users, Clock, History as HistoryIcon, UserPlus, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, GraduationCap, Trash2, Edit, Search, ChevronUp, ChevronDown, ChevronsUpDown, RefreshCw, Loader2, Info, Users, Clock, History as HistoryIcon, UserPlus, Calendar as CalendarIcon, Award } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/button';
 
@@ -22,7 +22,11 @@ import { MatriculaForm } from '../Matriculas/components/MatriculaForm';
 
 import { AulaModal } from './components/AulaModal';
 
+import { EncerrarCertificadosModal } from './components/EncerrarCertificadosModal';
+
 import { ConfirmDeleteDialog } from '@/shared/components/ConfirmDeleteDialog';
+
+import { Checkbox } from '@/shared/components/ui/checkbox';
 
 import {
 
@@ -74,6 +78,10 @@ export const TurmasPage: React.FC = () => {
 
   const [newStatus, setNewStatus] = useState<TurmaStatus | ''>('');
 
+  const [abrirEmissaoAposConcluir, setAbrirEmissaoAposConcluir] = useState(false);
+
+  const [encerrarCertificadosTurmaId, setEncerrarCertificadosTurmaId] = useState<number | null>(null);
+
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({
 
     key: 'id',
@@ -121,6 +129,8 @@ export const TurmasPage: React.FC = () => {
     setStatusTurmaId(id);
 
     setNewStatus(status);
+
+    setAbrirEmissaoAposConcluir(false);
 
   };
 
@@ -178,11 +188,18 @@ export const TurmasPage: React.FC = () => {
 
     if (!statusTurmaId || !newStatus) return;
 
+    const turmaId = statusTurmaId;
+    const deveAbrirEmissao = newStatus === 'concluida' && abrirEmissaoAposConcluir;
+
     try {
 
-      await updateTurmaStatus(statusTurmaId, newStatus);
+      await updateTurmaStatus(turmaId, newStatus);
 
       toast.success('Status da turma atualizado com sucesso!');
+
+      if (deveAbrirEmissao) {
+        setEncerrarCertificadosTurmaId(turmaId);
+      }
 
     } catch (err) {
 
@@ -193,6 +210,8 @@ export const TurmasPage: React.FC = () => {
       setStatusTurmaId(null);
 
       setNewStatus('');
+
+      setAbrirEmissaoAposConcluir(false);
 
     }
 
@@ -694,6 +713,26 @@ export const TurmasPage: React.FC = () => {
 
                             </Button>
 
+                            {turma.status === 'concluida' && (
+                              <Button
+
+                                variant="ghost"
+
+                                size="icon"
+
+                                className="h-8 w-8 rounded-full text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 hover:cursor-pointer"
+
+                                title="Emitir certificados"
+
+                                onClick={() => setEncerrarCertificadosTurmaId(turma.id)}
+
+                              >
+
+                                <Award className="w-4 h-4" />
+
+                              </Button>
+                            )}
+
                             <Button
 
                               variant="ghost"
@@ -880,6 +919,26 @@ export const TurmasPage: React.FC = () => {
 
                       </Button>
 
+                      {turma.status === 'concluida' && (
+                        <Button
+
+                          variant="outline"
+
+                          size="sm"
+
+                          className="h-8 rounded-full border-zinc-200 text-[11px] font-bold gap-1.5 shrink-0 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-100"
+
+                          onClick={() => setEncerrarCertificadosTurmaId(turma.id)}
+
+                        >
+
+                          <Award className="w-3.5 h-3.5" />
+
+                          Certificados
+
+                        </Button>
+                      )}
+
                       <div className="flex items-center gap-2 border-l border-zinc-100 pl-2">
 
                         <Button
@@ -1024,6 +1083,24 @@ export const TurmasPage: React.FC = () => {
 
             </div>
 
+            {newStatus === 'concluida' && (
+              <label className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-zinc-50/80 px-3 py-3 hover:cursor-pointer">
+                <Checkbox
+                  checked={abrirEmissaoAposConcluir}
+                  onCheckedChange={(checked) => setAbrirEmissaoAposConcluir(checked === true)}
+                  className="mt-0.5 border-zinc-300"
+                />
+                <span className="space-y-0.5">
+                  <span className="block text-sm font-bold text-zinc-800">
+                    Abrir emissão de certificados após concluir
+                  </span>
+                  <span className="block text-xs text-zinc-500">
+                    Opcional. Você também pode emitir depois pelo botão na listagem.
+                  </span>
+                </span>
+              </label>
+            )}
+
           </div>
 
 
@@ -1077,6 +1154,20 @@ export const TurmasPage: React.FC = () => {
         </DialogContent>
 
       </Dialog>
+
+
+
+      <EncerrarCertificadosModal
+
+        turmaId={encerrarCertificadosTurmaId}
+
+        open={encerrarCertificadosTurmaId !== null}
+
+        onOpenChange={(open) => {
+          if (!open) setEncerrarCertificadosTurmaId(null)
+        }}
+
+      />
 
 
 

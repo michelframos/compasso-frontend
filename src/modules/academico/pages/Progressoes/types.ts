@@ -10,6 +10,9 @@ export interface TurmaDestinoOpcao {
   professor: string | null
   alunos_vigentes: number
   maximo_alunos: number
+  valor_mensalidade?: number | null
+  dia_vencimento_mensalidade?: number | null
+  quantidade_parcelas_mensalidade?: number | null
 }
 
 export interface SugestaoProgressao {
@@ -40,4 +43,10 @@ export interface DecisaoProgressaoPayload {
   decisao: 'aprovada' | 'rejeitada'
   id_turma_destino?: number | null
   motivo_decisao?: string | null
+  reajustar_mensalidades?: boolean
+  gerar_novas_mensalidades?: boolean
+  valor_mensalidade_geracao?: number
+  quantidade_parcelas?: number
+  dia_vencimento?: number
+  data_inicio_mensalidades?: string
 }

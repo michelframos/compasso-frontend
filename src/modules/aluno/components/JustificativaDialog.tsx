@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { toast } from 'sonner'
-import { Button } from '@/shared/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
+import { CustomModalGlobal } from '@/shared/components/CustomModalGlobal'
 import { Label } from '@/shared/components/ui/label'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { getErrorMessage } from '@/shared/lib/utils'
@@ -37,9 +36,8 @@ export const JustificativaDialog: React.FC<JustificativaDialogProps> = ({
     onFechar()
   }
 
-  const enviar = async (event: React.FormEvent) => {
-    event.preventDefault()
-    if (!idAula) return
+  const enviar = async () => {
+    if (!idAula || motivo.trim() === '') return
 
     setEnviando(true)
     try {
@@ -61,39 +59,43 @@ export const JustificativaDialog: React.FC<JustificativaDialogProps> = ({
   }
 
   return (
-    <Dialog open={aberto} onOpenChange={(estaAberto) => !estaAberto && fechar()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{aviso ? 'Avisar ausência' : 'Justificar falta'}</DialogTitle>
-          <DialogDescription>{titulo}</DialogDescription>
-        </DialogHeader>
-        <form onSubmit={(event) => void enviar(event)} className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="motivo-falta">Motivo</Label>
-            <Textarea
-              id="motivo-falta"
-              required
-              maxLength={2000}
-              value={motivo}
-              onChange={(event) => setMotivo(event.target.value)}
-              placeholder={aviso ? 'Por que você não poderá ir?' : 'O que aconteceu nesta aula?'}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="anexo-falta">Anexo (opcional)</Label>
-            <input
-              id="anexo-falta"
-              type="file"
-              accept="application/pdf,image/jpeg,image/png"
-              className="block w-full text-sm text-zinc-600"
-              onChange={(event) => setAnexo(event.target.files?.[0] ?? null)}
-            />
-          </div>
-          <Button type="submit" disabled={enviando || motivo.trim() === ''} className="w-full rounded-full bg-indigo-600 hover:bg-indigo-700">
-            {enviando ? 'Enviando...' : 'Enviar'}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <CustomModalGlobal
+      open={aberto}
+      close={(open: boolean) => !open && fechar()}
+      onClose={fechar}
+      onConfirm={() => void enviar()}
+      isLoading={enviando}
+      firsChunkTitle={aviso ? 'Avisar' : 'Justificar'}
+      secondChunkTitle={aviso ? 'ausência' : 'falta'}
+      colorSecondChunkTitle="text-indigo-600"
+      titleDescription={titulo}
+      textConfirmButton={enviando ? 'Enviando...' : 'Enviar'}
+      loadingText="Enviando..."
+    >
+      <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="motivo-falta" className="text-zinc-700 font-medium ml-1">Motivo</Label>
+          <Textarea
+            id="motivo-falta"
+            required
+            maxLength={2000}
+            value={motivo}
+            onChange={(event) => setMotivo(event.target.value)}
+            placeholder={aviso ? 'Por que você não poderá ir?' : 'O que aconteceu nesta aula?'}
+            className="rounded-xl min-h-[100px]"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="anexo-falta" className="text-zinc-700 font-medium ml-1">Anexo (opcional)</Label>
+          <input
+            id="anexo-falta"
+            type="file"
+            accept="application/pdf,image/jpeg,image/png"
+            className="block w-full text-sm text-zinc-600"
+            onChange={(event) => setAnexo(event.target.files?.[0] ?? null)}
+          />
+        </div>
+      </div>
+    </CustomModalGlobal>
   )
 }

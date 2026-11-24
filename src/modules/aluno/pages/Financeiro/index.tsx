@@ -2,8 +2,8 @@ import React from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Loader2, QrCode, Receipt, Wallet } from 'lucide-react'
+import { CustomModalGlobal } from '@/shared/components/CustomModalGlobal'
 import { NoData } from '@/shared/components/NoData'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
 import type { ContaDoAluno } from '../../types'
 import { useFinanceiro, type SituacaoConta } from './hooks/useFinanceiro'
 
@@ -176,33 +176,30 @@ export const FinanceiroPage: React.FC = () => {
         </div>
       )}
 
-      <Dialog open={pix !== null} onOpenChange={(aberto) => !aberto && fecharPix()}>
-        <DialogContent className="max-w-sm rounded-3xl">
-          <DialogHeader>
-            <DialogTitle>{pix?.descricao ?? 'PIX'}</DialogTitle>
-            <DialogDescription>
-              {pix ? dinheiro(pix.valor) : 'Escaneie o QR Code ou copie o código.'}
-            </DialogDescription>
-          </DialogHeader>
-          {pix && (
-            <div className="space-y-3">
-              <img
-                src={`data:image/png;base64,${pix.qr_code}`}
-                alt="QR Code PIX"
-                className="mx-auto h-52 w-52"
-              />
-              <p className="break-all rounded-xl bg-zinc-50 p-3 text-[11px] leading-relaxed text-zinc-600">{pix.payload}</p>
-              <button
-                type="button"
-                onClick={copiarPix}
-                className="h-10 w-full rounded-full bg-indigo-600 text-sm font-bold text-white"
-              >
-                Copiar código
-              </button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <CustomModalGlobal
+        open={pix !== null}
+        close={(open: boolean) => !open && fecharPix()}
+        onClose={fecharPix}
+        onConfirm={copiarPix}
+        isLoading={false}
+        firsChunkTitle="Pagamento"
+        secondChunkTitle="PIX"
+        colorSecondChunkTitle="text-indigo-600"
+        titleDescription={pix ? dinheiro(pix.valor) : 'Escaneie o QR Code ou copie o código.'}
+        textCancelButton="Fechar"
+        textConfirmButton="Copiar código"
+      >
+        {pix && (
+          <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-4">
+            <img
+              src={`data:image/png;base64,${pix.qr_code}`}
+              alt="QR Code PIX"
+              className="mx-auto h-52 w-52"
+            />
+            <p className="break-all rounded-xl bg-zinc-50 p-3 text-[11px] leading-relaxed text-zinc-600">{pix.payload}</p>
+          </div>
+        )}
+      </CustomModalGlobal>
     </div>
   )
 }

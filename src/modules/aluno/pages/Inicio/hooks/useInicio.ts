@@ -11,18 +11,21 @@ export function useInicio() {
   const aguardandoDependente = role === 'responsavel' && !idAluno
   const [aluno, setAluno] = useState<AlunoAutenticado | null>(null)
   const [painel, setPainel] = useState<PainelAluno | null>(null)
+  const [painelErro, setPainelErro] = useState(false)
   const [isLoading, setIsLoading] = useState(!aguardandoDependente)
 
   useEffect(() => {
     if (aguardandoDependente) {
       setAluno(null)
       setPainel(null)
+      setPainelErro(false)
       setIsLoading(false)
       return
     }
 
     let ativo = true
     setIsLoading(true)
+    setPainelErro(false)
 
     Promise.allSettled([getAlunoAutenticado(params.id_aluno), getPainel(params.id_aluno)]).then(
       ([alunoResult, painelResult]) => {
@@ -30,8 +33,10 @@ export function useInicio() {
         if (alunoResult.status === 'fulfilled') setAluno(alunoResult.value)
         if (painelResult.status === 'fulfilled') {
           setPainel(painelResult.value)
+          setPainelErro(false)
         } else {
           setPainel(null)
+          setPainelErro(true)
           toast.error(getErrorMessage(painelResult.reason, 'Não foi possível carregar o painel.'))
         }
         setIsLoading(false)
@@ -43,5 +48,5 @@ export function useInicio() {
     }
   }, [aguardandoDependente, params.id_aluno])
 
-  return { aluno, painel, isLoading, aguardandoDependente }
+  return { aluno, painel, painelErro, isLoading, aguardandoDependente }
 }

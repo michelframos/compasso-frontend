@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { QrCode, Building2, Users, MessageCircle, Blocks, CalendarCog } from 'lucide-react';
+import { QrCode, Building2, Users, MessageCircle, Blocks, CalendarCog, Wallet } from 'lucide-react';
 import { ConfiguracaoPixForm } from './components/ConfiguracaoPixForm';
 import { ConfiguracaoEmpresaForm } from './components/ConfiguracaoEmpresaForm';
+import { ConfiguracaoMensalidadesForm } from './components/ConfiguracaoMensalidadesForm';
 import { ModulosEscolaTab } from './components/ModulosEscolaTab';
 import { PermissoesProfessorTab } from './components/PermissoesProfessorTab';
 import { UsuariosList } from './components/UsuariosList';
@@ -12,10 +13,10 @@ import { useAuthStore } from '@/shared/store/useAuthStore'
 export const ConfiguracoesPage: React.FC = () => {
     const hasFinanceiro = useHasModulo('financeiro');
     const isAdmin = useAuthStore((s) => s.user?.role === 'admin');
-    const [activeTab, setActiveTab] = useState<'pix' | 'empresa' | 'usuarios' | 'whatsapp' | 'modulos' | 'professores'>('empresa');
+    const [activeTab, setActiveTab] = useState<'pix' | 'mensalidades' | 'empresa' | 'usuarios' | 'whatsapp' | 'modulos' | 'professores'>('empresa');
 
     useEffect(() => {
-        if (activeTab === 'pix' && !hasFinanceiro) {
+        if ((activeTab === 'pix' || activeTab === 'mensalidades') && !hasFinanceiro) {
             setActiveTab('whatsapp');
         }
     }, [activeTab, hasFinanceiro]);
@@ -60,6 +61,19 @@ export const ConfiguracoesPage: React.FC = () => {
                         >
                             <QrCode className="w-4 h-4" />
                             Configuração PIX
+                        </button>
+                        )}
+                        {hasFinanceiro && (
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('mensalidades')}
+                            className={`px-4 py-2 text-sm font-bold border-b-2 transition-all flex items-center gap-2 hover:cursor-pointer ${activeTab === 'mensalidades'
+                                ? 'border-indigo-600 text-indigo-600'
+                                : 'border-transparent text-zinc-400 hover:text-zinc-600'
+                                }`}
+                        >
+                            <Wallet className="w-4 h-4" />
+                            Mensalidades
                         </button>
                         )}
                         <button
@@ -118,6 +132,8 @@ export const ConfiguracoesPage: React.FC = () => {
                         <ConfiguracaoEmpresaForm />
                     ) : activeTab === 'pix' && hasFinanceiro ? (
                         <ConfiguracaoPixForm />
+                    ) : activeTab === 'mensalidades' && hasFinanceiro ? (
+                        <ConfiguracaoMensalidadesForm />
                     ) : activeTab === 'whatsapp' ? (
                         <ConfiguracaoWhatsappTab />
                     ) : activeTab === 'modulos' && isAdmin ? (

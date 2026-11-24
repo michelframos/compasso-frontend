@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { Download, FileText, Loader2 } from 'lucide-react'
+import { CustomModalGlobal } from '@/shared/components/CustomModalGlobal'
 import { NoData } from '@/shared/components/NoData'
 import { Button } from '@/shared/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
 import type { ContratoDoAluno } from '../../types'
 import { useMeusContratos } from './hooks/useMeusContratos'
 
@@ -73,18 +73,23 @@ export const MeusContratosPage: React.FC = () => {
         </div>
       )}
 
-      <Dialog open={aberto !== null} onOpenChange={(abertoDialog) => !abertoDialog && setAberto(null)}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{aberto?.nome || 'Contrato'}</DialogTitle>
-            <DialogDescription>{aberto?.descricao || 'Documento gerado pela escola.'}</DialogDescription>
-          </DialogHeader>
-          <div
-            className="prose prose-sm max-w-none text-sm text-zinc-700"
-            dangerouslySetInnerHTML={{ __html: aberto?.contrato_gerado || '<p>Este contrato não tem conteúdo.</p>' }}
-          />
-        </DialogContent>
-      </Dialog>
+      <CustomModalGlobal
+        open={aberto !== null}
+        close={(open: boolean) => !open && setAberto(null)}
+        onClose={() => setAberto(null)}
+        onConfirm={() => setAberto(null)}
+        isLoading={false}
+        firsChunkTitle={aberto?.nome || 'Contrato'}
+        titleDescription={aberto?.descricao || 'Documento gerado pela escola.'}
+        showConfirmButton={false}
+        textCancelButton="Fechar"
+        contentClassName="sm:max-w-2xl"
+      >
+        <div
+          className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 prose prose-sm max-w-none text-sm text-zinc-700"
+          dangerouslySetInnerHTML={{ __html: aberto?.contrato_gerado || '<p>Este contrato não tem conteúdo.</p>' }}
+        />
+      </CustomModalGlobal>
     </div>
   )
 }

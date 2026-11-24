@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Info, Calendar, MapPin, Trash2, Edit, ChevronUp, ChevronDown, ChevronsUpDown, Search, Loader2 } from 'lucide-react';
+import { Plus, Info, Calendar, MapPin, Trash2, Edit, ChevronUp, ChevronDown, ChevronsUpDown, Search, Loader2, Ticket } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Card, CardContent } from '@/shared/components/ui/card';
@@ -9,10 +9,23 @@ import { ConfirmDeleteDialog } from '@/shared/components/ConfirmDeleteDialog';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { getErrorMessage } from '@/shared/lib/utils';
+import { useHasModulo } from '@/shared/hooks/useHasModulo';
+import { useAuthStore } from '@/shared/store/useAuthStore';
 
 export const EspetaculosPage: React.FC = () => {
   const { espetaculos, isLoading, error, deleteEspetaculo, fetchEspetaculos } = useEspetaculos();
   const navigate = useNavigate();
+  const hasBilheteria = useHasModulo('bilheteria');
+  const role = useAuthStore((s) => s.user?.role);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  const irParaBilheteria = () => {
+    const podeAcessar =
+      isAuthenticated &&
+      hasBilheteria &&
+      (role === 'secretaria' || role === 'admin');
+    navigate(podeAcessar ? '/bilheteria' : '/bilheteria/login');
+  };
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({
     key: 'titulo',
@@ -103,6 +116,15 @@ export const EspetaculosPage: React.FC = () => {
               className="pl-9 h-9 rounded-full bg-white border-zinc-200 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
             />
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={irParaBilheteria}
+            className="h-9 w-full gap-2 rounded-full border-indigo-200 px-5 text-sm font-bold text-indigo-700 hover:bg-indigo-50 lg:w-auto"
+          >
+            <Ticket className="w-4 h-4" />
+            Gestão de Ingressos
+          </Button>
           <Button
             onClick={handleOpenCreate}
             className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full h-9 px-5 gap-2 shadow-lg shadow-indigo-100 font-bold active:scale-95 transition-all text-sm hover:cursor-pointer w-full lg:w-auto"

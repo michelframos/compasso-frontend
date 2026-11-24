@@ -17,7 +17,7 @@ import type { Instituicao, LoginErrorResponse, LoginLocationState } from '@/modu
 import { formatCnpj, getErrorMessage, unmaskCnpj } from '@/shared/lib/utils'
 import { getHomePath } from '@/shared/lib/homePath'
 
-export type LoginMode = 'escola' | 'platform' | 'aluno'
+export type LoginMode = 'escola' | 'platform' | 'aluno' | 'bilheteria'
 
 const credenciaisSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -47,14 +47,16 @@ export const useLoginForm = (mode: LoginMode = 'escola') => {
   const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
   const [needsActivation, setNeedsActivation] = useState(
-    mode === 'escola' && Boolean(locationState?.aguardandoAtivacao),
+    (mode === 'escola' || mode === 'bilheteria') && Boolean(locationState?.aguardandoAtivacao),
   )
   const [escolasPendentes, setEscolasPendentes] = useState<Instituicao[]>([])
 
+  const usaCnpj = mode === 'escola' || mode === 'bilheteria'
+
   const form = useForm<LoginFormValues>({
-    resolver: zodResolver(mode === 'escola' ? escolaSchema : simplesSchema),
+    resolver: zodResolver(usaCnpj ? escolaSchema : simplesSchema),
     defaultValues: {
-      cnpj: mode === 'escola' ? (locationState?.cnpj ?? '') : '',
+      cnpj: usaCnpj ? (locationState?.cnpj ?? '') : '',
       email: locationState?.email ?? '',
       password: '',
       activation_code: '',
@@ -112,6 +114,23 @@ export const useLoginForm = (mode: LoginMode = 'escola') => {
           tenant_slug: tenantSlug,
         })
         concluirLogin(response, getHomePath(response.data.role))
+        return
+      }
+
+      if (mode === 'bilheteria') {
+        const response = await login({
+          email: values.email,
+          password: values.password,
+          tenant_cnpj: unmaskCnpj(values.cnpj),
+          activation_code: needsActivation ? activationCode : undefined,
+        })
+        const role = response.data.role
+        const modulos = response.tenant?.modulos ?? []
+        if (!['secretaria', 'admin'].includes(role) || !modulos.includes('bilheteria')) {
+          setError('Este usuário não tem acesso ao Painel de Gestão de Ingressos.')
+          return
+        }
+        concluirLogin(response, '/bilheteria')
         return
       }
 

@@ -46,6 +46,18 @@ const matriculaSchema = z.object({
 
   contrato_gerado: z.string().optional().nullable(),
 
+  gerar_mensalidades: z.boolean().default(false),
+
+  valor_mensalidade_geracao: z.coerce.number().min(0).optional().or(z.literal(0)),
+
+  quantidade_parcelas: z.coerce.number().min(1).max(24).optional().or(z.literal(0)),
+
+  dia_vencimento: z.coerce.number().min(1).max(31).optional().or(z.literal(0)),
+
+  data_inicio_mensalidades: z.string().optional().or(z.literal('')),
+
+  inicio_parcelas_mensalidade: z.enum(['mes_matricula', 'mes_seguinte']).default('mes_matricula'),
+
 }).superRefine((data, ctx) => {
 
   if (data.tipo === 'turma') {
@@ -77,6 +89,16 @@ const matriculaSchema = z.object({
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Selecione um professor', path: ['id_professor'] });
 
     }
+
+  }
+
+  if (data.gerar_mensalidades && !(Number(data.valor_mensalidade_geracao) > 0)) {
+
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Informe o valor da mensalidade',
+      path: ['valor_mensalidade_geracao'],
+    });
 
   }
 
@@ -143,6 +165,18 @@ export const useMatriculaForm = (
       contrato_id:  null,
 
       contrato_gerado: null,
+
+      gerar_mensalidades: false,
+
+      valor_mensalidade_geracao: 0,
+
+      quantidade_parcelas: 12,
+
+      dia_vencimento: 10,
+
+      data_inicio_mensalidades: new Date().toISOString().split('T')[0],
+
+      inicio_parcelas_mensalidade: 'mes_matricula',
 
     },
 
@@ -216,6 +250,18 @@ export const useMatriculaForm = (
 
           contrato_gerado: data.contrato_gerado || null,
 
+          gerar_mensalidades: false,
+
+          valor_mensalidade_geracao: 0,
+
+          quantidade_parcelas: 12,
+
+          dia_vencimento: 10,
+
+          data_inicio_mensalidades: data.data || new Date().toISOString().split('T')[0],
+
+          inicio_parcelas_mensalidade: 'mes_matricula',
+
         });
 
       } catch (error) {
@@ -248,25 +294,41 @@ export const useMatriculaForm = (
 
     try {
 
-      // Limpar campos irrelevantes de acordo com o tipo
+      const {
+        gerar_mensalidades,
+        valor_mensalidade_geracao,
+        quantidade_parcelas,
+        dia_vencimento,
+        data_inicio_mensalidades,
+        inicio_parcelas_mensalidade,
+        ...resto
+      } = values;
 
-      const payload = { ...values };
+      const payload: Record<string, unknown> = { ...resto };
 
       if (payload.tipo === 'turma') {
-
-        payload.id_curso     = '';
-
-        payload.id_nivel     = '';
-
+        payload.id_curso = '';
+        payload.id_nivel = '';
         payload.id_professor = '';
-
       } else {
-
         payload.id_turma = '';
-
       }
 
-
+      if (!initialData?.id && (payload.tipo === 'turma' || payload.tipo === 'curso')) {
+        const valorNum = Number(valor_mensalidade_geracao) || 0;
+        // Valor > 0 no formulário implica intenção de gerar (evita falha silenciosa se a flag não vier true).
+        const deveGerar = Boolean(gerar_mensalidades) || valorNum > 0;
+        payload.gerar_mensalidades = deveGerar;
+        if (deveGerar) {
+          const qtdNum = Number(quantidade_parcelas);
+          const diaNum = Number(dia_vencimento);
+          payload.valor_mensalidade_geracao = valorNum > 0 ? valorNum : undefined;
+          payload.quantidade_parcelas = Number.isFinite(qtdNum) && qtdNum >= 1 ? qtdNum : undefined;
+          payload.dia_vencimento = Number.isFinite(diaNum) && diaNum >= 1 ? diaNum : undefined;
+          payload.data_inicio_mensalidades = data_inicio_mensalidades || undefined;
+          payload.inicio_parcelas_mensalidade = inicio_parcelas_mensalidade || undefined;
+        }
+      }
 
       if (initialData?.id) {
 

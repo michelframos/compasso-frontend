@@ -98,6 +98,10 @@ export interface RegistrarEscolaResponse {
   }
 }
 
+export type ModoGeracaoMensalidades = 'automatico' | 'formulario' | 'duracao_turma'
+
+export type InicioParcelasMensalidade = 'mes_matricula' | 'mes_seguinte'
+
 export interface ConfiguracaoEmpresa {
   id: number
   nome_fantasia: string
@@ -114,6 +118,10 @@ export interface ConfiguracaoEmpresa {
   limite_reposicoes_periodo?: number | null
   prazo_reposicao_dias?: number | null
   frequencia_minima?: number
+  modo_geracao_mensalidades?: ModoGeracaoMensalidades
+  dia_vencimento_mensalidade?: number
+  quantidade_parcelas_mensalidade?: number
+  inicio_parcelas_mensalidade?: InicioParcelasMensalidade
   estado?: { id: number; nome: string; sigla: string }
   cidade?: { id: number; nome: string }
 }
@@ -133,6 +141,10 @@ export interface ConfiguracaoEmpresaFormData {
   limite_reposicoes_periodo?: number | string | null
   prazo_reposicao_dias?: number | string | null
   frequencia_minima?: number | string
+  modo_geracao_mensalidades?: ModoGeracaoMensalidades
+  dia_vencimento_mensalidade?: number | string
+  quantidade_parcelas_mensalidade?: number | string
+  inicio_parcelas_mensalidade?: InicioParcelasMensalidade
 }
 
 export interface Perfil {

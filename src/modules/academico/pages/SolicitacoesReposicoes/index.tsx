@@ -24,29 +24,46 @@ function rotulo(aula: AulaReposicaoStaff) {
 
 function EscolhaDestino({ id, valor, onChange }: { id: number; valor: string; onChange: (valor: string) => void }) {
   const [opcoes, setOpcoes] = useState<AulaReposicaoStaff[]>([])
+  const [carregando, setCarregando] = useState(true)
 
   useEffect(() => {
     let ativo = true
+    setCarregando(true)
     listarOpcoesDaReposicao(id)
       .then((lista) => {
         if (ativo) setOpcoes(lista)
       })
       .catch((erro) => {
-        if (ativo) toast.error(getErrorMessage(erro, 'Não foi possível carregar as aulas com vaga.'))
+        if (ativo) {
+          setOpcoes([])
+          toast.error(getErrorMessage(erro, 'Não foi possível carregar as aulas com vaga.'))
+        }
+      })
+      .finally(() => {
+        if (ativo) setCarregando(false)
       })
     return () => {
       ativo = false
     }
   }, [id])
 
+  if (!carregando && opcoes.length === 0) {
+    return (
+      <p className="rounded-2xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        Nenhuma aula com vaga do mesmo curso nos próximos 45 dias. Crie uma aula de reposição na agenda (ou em outra turma do curso) e volte para aprovar.
+      </p>
+    )
+  }
+
   return (
     <select
       value={valor}
       onChange={(event) => onChange(event.target.value)}
-      className="h-9 w-full rounded-full border border-zinc-200 bg-white px-3 text-xs text-zinc-700"
+      disabled={carregando}
+      className="h-9 w-full rounded-full border border-zinc-200 bg-white px-3 text-xs text-zinc-700 disabled:opacity-60"
       aria-label="Aula de destino"
     >
-      <option value="">Escolha a aula</option>
+      <option value="">{carregando ? 'Carregando aulas…' : 'Escolha a aula'}</option>
       {opcoes.map((aula) => (
         <option key={aula.id} value={aula.id}>
           {rotulo(aula)}

@@ -50,6 +50,22 @@ const turmaSchema = z.object({
 
   valor_mensalidade: z.coerce.number().min(0).optional().or(z.literal(0)),
 
+  modo_geracao_mensalidades: z.enum(['herdar', 'automatico', 'formulario', 'duracao_turma']).default('herdar'),
+
+  dia_vencimento_mensalidade: z.union([
+    z.literal(''),
+    z.null(),
+    z.coerce.number().min(1).max(31),
+  ]).optional(),
+
+  quantidade_parcelas_mensalidade: z.union([
+    z.literal(''),
+    z.null(),
+    z.coerce.number().min(1).max(24),
+  ]).optional(),
+
+  inicio_parcelas_mensalidade: z.enum(['herdar', 'mes_matricula', 'mes_seguinte']).default('herdar'),
+
   percentual_comissao_especifico: z.coerce.number().min(0).max(100).optional().or(z.literal(0)),
 
   valor_hora_aula_especifico: z.coerce.number().min(0).optional().or(z.literal(0)),
@@ -120,6 +136,14 @@ export const useTurmaForm = (onSuccess: (id?: number) => void, initialData?: Tur
 
       valor_mensalidade: initialData?.valor_mensalidade || 0,
 
+      modo_geracao_mensalidades: initialData?.modo_geracao_mensalidades ?? 'herdar',
+
+      dia_vencimento_mensalidade: initialData?.dia_vencimento_mensalidade ?? '',
+
+      quantidade_parcelas_mensalidade: initialData?.quantidade_parcelas_mensalidade ?? '',
+
+      inicio_parcelas_mensalidade: initialData?.inicio_parcelas_mensalidade ?? 'herdar',
+
       percentual_comissao_especifico: initialData?.percentual_comissao_especifico || 0,
 
       valor_hora_aula_especifico: initialData?.valor_hora_aula_especifico || 0,
@@ -187,6 +211,14 @@ export const useTurmaForm = (onSuccess: (id?: number) => void, initialData?: Tur
           status: data.status,
 
           valor_mensalidade: data.valor_mensalidade || 0,
+
+          modo_geracao_mensalidades: data.modo_geracao_mensalidades ?? 'herdar',
+
+          dia_vencimento_mensalidade: data.dia_vencimento_mensalidade ?? '',
+
+          quantidade_parcelas_mensalidade: data.quantidade_parcelas_mensalidade ?? '',
+
+          inicio_parcelas_mensalidade: data.inicio_parcelas_mensalidade ?? 'herdar',
 
           percentual_comissao_especifico: data.percentual_comissao_especifico || 0,
 
@@ -260,6 +292,18 @@ export const useTurmaForm = (onSuccess: (id?: number) => void, initialData?: Tur
         values.frequencia_minima === '' || values.frequencia_minima === null || values.frequencia_minima === undefined
           ? null
           : Number(values.frequencia_minima),
+      modo_geracao_mensalidades:
+        values.modo_geracao_mensalidades === 'herdar' ? null : values.modo_geracao_mensalidades,
+      dia_vencimento_mensalidade:
+        values.dia_vencimento_mensalidade === '' || values.dia_vencimento_mensalidade === null || values.dia_vencimento_mensalidade === undefined
+          ? null
+          : Number(values.dia_vencimento_mensalidade),
+      quantidade_parcelas_mensalidade:
+        values.quantidade_parcelas_mensalidade === '' || values.quantidade_parcelas_mensalidade === null || values.quantidade_parcelas_mensalidade === undefined
+          ? null
+          : Number(values.quantidade_parcelas_mensalidade),
+      inicio_parcelas_mensalidade:
+        values.inicio_parcelas_mensalidade === 'herdar' ? null : values.inicio_parcelas_mensalidade,
     };
 
     try {

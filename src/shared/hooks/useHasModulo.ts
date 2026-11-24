@@ -4,6 +4,7 @@ export type ModuloAppKey =
   | 'leads'
   | 'financeiro'
   | 'espetaculos'
+  | 'bilheteria'
   | 'instrumentos'
   | 'relatorios'
   | 'avaliacoes'

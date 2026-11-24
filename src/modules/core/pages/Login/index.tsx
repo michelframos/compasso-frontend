@@ -9,11 +9,15 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({ mode = 'escola' }) => {
   const isAluno = mode === 'aluno'
+  const isBilheteria = mode === 'bilheteria'
+  const painelBg = isBilheteria ? 'bg-amber-700' : 'bg-indigo-600'
+  const painelTextMuted = isBilheteria ? 'text-amber-100' : 'text-indigo-100'
+  const painelFooter = isBilheteria ? 'text-amber-200' : 'text-indigo-200'
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-white">
       {/* Lado Esquerdo - Boas Vindas */}
-      <div className="hidden md:flex md:w-1/2 bg-indigo-600 p-12 flex-col justify-between text-white relative overflow-hidden">
+      <div className={`hidden md:flex md:w-1/2 ${painelBg} p-12 flex-col justify-between text-white relative overflow-hidden`}>
         <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path d="M0 100 C 20 0 50 0 100 100 Z" fill="currentColor" />
@@ -30,20 +34,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({ mode = 'escola' }) => {
 
           <div className="space-y-6">
             <h1 className="text-6xl font-bold leading-tight">
-              {isAluno ? <>Olá,<br />vamos começar?</> : <>Olá, <br />Seja bem-vindo!</>}
+              {isAluno
+                ? <>Olá,<br />vamos começar?</>
+                : isBilheteria
+                  ? <>Gestão de<br />ingressos</>
+                  : <>Olá, <br />Seja bem-vindo!</>}
             </h1>
-            <p className="text-xl text-indigo-100 max-w-md font-light leading-relaxed">
+            <p className={`text-xl ${painelTextMuted} max-w-md font-light leading-relaxed`}>
               {isAluno
                 ? 'Acompanhe agenda, frequência, materiais e boletim em um só lugar.'
-                : 'Gestão simplificada para escolas de música e dança. Acesse seu painel e continue sua jornada artística.'}
+                : isBilheteria
+                  ? 'Gere, venda e valide ingressos por espetáculo com cupons, templates e QR Code.'
+                  : 'Gestão simplificada para escolas de música e dança. Acesse seu painel e continue sua jornada artística.'}
             </p>
           </div>
         </div>
 
-        <div className="relative z-10 text-sm text-indigo-200">
+        <div className={`relative z-10 text-sm ${painelFooter}`}>
           {isAluno
             ? 'Feito para alunos e responsáveis acompanharem a rotina da escola.'
-            : 'Oferecemos todas as ferramentas para simplificar a gestão da sua escola sem burocracia.'}
+            : isBilheteria
+              ? 'Módulo Bilheteria — acesso para secretaria e administração.'
+              : 'Oferecemos todas as ferramentas para simplificar a gestão da sua escola sem burocracia.'}
         </div>
       </div>
 
@@ -60,3 +72,5 @@ export const LoginPage: React.FC<LoginPageProps> = ({ mode = 'escola' }) => {
 export const PlatformLoginPage: React.FC = () => <LoginPage mode="platform" />;
 
 export const AlunoLoginPage: React.FC = () => <LoginPage mode="aluno" />;
+
+export const BilheteriaLoginPage: React.FC = () => <LoginPage mode="bilheteria" />;

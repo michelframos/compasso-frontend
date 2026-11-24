@@ -14,6 +14,7 @@ import { relatoriosRoutes } from '@/modules/relatorios'
 import { platformRoutes } from '@/modules/platform'
 import { professorRoutes } from '@/modules/professor'
 import { alunoAreaRoute } from '@/modules/aluno'
+import { bilheteriaPublicRoutes, bilheteriaRoutes } from '@/modules/bilheteria'
 import { PlatformProtectedRoute } from '@/shared/components/PlatformProtectedRoute'
 import { HomeRedirect } from '@/shared/components/HomeRedirect'
 
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       ...corePublicRoutes,
+      ...bilheteriaPublicRoutes,
       alunoAreaRoute,
       {
         path: '/',
@@ -45,6 +47,7 @@ export const router = createBrowserRouter([
           ...comercialRoutes,
           ...financeiroRoutes,
           ...espetaculosRoutes,
+          ...bilheteriaRoutes,
           ...instrumentosRoutes,
           ...coreRoutes,
           ...notificacoesRoutes,
