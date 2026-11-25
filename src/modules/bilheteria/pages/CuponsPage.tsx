@@ -1,28 +1,57 @@
 import React, { useEffect, useState } from 'react'
 import { Loader2, Percent, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import api from '@/shared/lib/axios'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
+import { Checkbox } from '@/shared/components/ui/checkbox'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { getErrorMessage } from '@/shared/lib/utils'
 import { atualizarCupom, criarCupom, excluirCupom, listarCupons } from '../api/cupons'
 import type { CupomIngresso } from '../types'
 import { EmptyState, LoadingBlock, PageHeader } from '../components/ui'
 
+type EspetaculoOpcao = { id: number; titulo: string }
+
+function formatarValidade(cupom: CupomIngresso): string {
+  if (!cupom.valido_de && !cupom.valido_ate) return 'Sem prazo de validade'
+  if (cupom.valido_de && cupom.valido_ate) return `Válido de ${cupom.valido_de} até ${cupom.valido_ate}`
+  if (cupom.valido_de) return `Válido a partir de ${cupom.valido_de}`
+  return `Válido até ${cupom.valido_ate}`
+}
+
+function formatarEspetaculos(cupom: CupomIngresso): string {
+  const lista = cupom.espetaculos ?? []
+  if (lista.length === 0) return 'Todos os espetáculos'
+  if (lista.length === 1) return lista[0].titulo
+  if (lista.length <= 3) return lista.map((e) => e.titulo).join(', ')
+  return `${lista.slice(0, 2).map((e) => e.titulo).join(', ')} e mais ${lista.length - 2}`
+}
+
 export const CuponsPage: React.FC = () => {
   const [cupons, setCupons] = useState<CupomIngresso[]>([])
+  const [espetaculos, setEspetaculos] = useState<EspetaculoOpcao[]>([])
   const [loading, setLoading] = useState(true)
   const [codigo, setCodigo] = useState('')
   const [tipo, setTipo] = useState<'percentual' | 'valor_fixo'>('percentual')
   const [valor, setValor] = useState('10')
+  const [usoMaximo, setUsoMaximo] = useState('')
+  const [validoDe, setValidoDe] = useState('')
+  const [validoAte, setValidoAte] = useState('')
+  const [idsEspetaculos, setIdsEspetaculos] = useState<number[]>([])
   const [criando, setCriando] = useState(false)
 
   const carregar = async () => {
     setLoading(true)
     try {
-      const res = await listarCupons()
-      setCupons(res.data ?? [])
+      const [cuponsRes, espetaculosRes] = await Promise.all([
+        listarCupons(),
+        api.get('/espetaculos'),
+      ])
+      setCupons(cuponsRes.data ?? [])
+      const lista = espetaculosRes.data?.data ?? espetaculosRes.data ?? []
+      setEspetaculos(lista)
     } catch (err) {
       toast.error(getErrorMessage(err, 'Erro ao listar cupons.'))
     } finally {
@@ -34,17 +63,44 @@ export const CuponsPage: React.FC = () => {
     void carregar()
   }, [])
 
+  const toggleEspetaculo = (id: number, checked: boolean) => {
+    setIdsEspetaculos((prev) => (checked ? [...prev, id] : prev.filter((item) => item !== id)))
+  }
+
+  const limparFormulario = () => {
+    setCodigo('')
+    setTipo('percentual')
+    setValor('10')
+    setUsoMaximo('')
+    setValidoDe('')
+    setValidoAte('')
+    setIdsEspetaculos([])
+  }
+
   const handleCriar = async () => {
     if (!codigo.trim()) {
       toast.error('Informe o código do cupom.')
       return
     }
+    if (validoDe && validoAte && validoAte < validoDe) {
+      toast.error('A data de término deve ser igual ou posterior ao início.')
+      return
+    }
+
     setCriando(true)
     try {
-      await criarCupom({ codigo: codigo.trim(), tipo, valor: Number(valor), ativo: true })
+      await criarCupom({
+        codigo: codigo.trim(),
+        tipo,
+        valor: Number(valor),
+        ativo: true,
+        uso_maximo: usoMaximo.trim() ? Number(usoMaximo) : null,
+        valido_de: validoDe || null,
+        valido_ate: validoAte || null,
+        ids_espetaculos: idsEspetaculos,
+      })
       toast.success('Cupom criado.')
-      setCodigo('')
-      setValor('10')
+      limparFormulario()
       await carregar()
     } catch (err) {
       toast.error(getErrorMessage(err, 'Erro ao criar cupom.'))
@@ -79,14 +135,15 @@ export const CuponsPage: React.FC = () => {
       <PageHeader
         title="Cupons de"
         highlight="Desconto"
-        description="Crie códigos percentuais ou de valor fixo para usar na venda."
+        description="Defina código, limite de usos, validade e espetáculos liberados."
       />
 
       <Card className="border-none bg-white shadow-sm">
-        <CardContent className="p-5">
-          <p className="mb-4 text-sm font-bold text-zinc-900">Novo cupom</p>
-          <div className="flex flex-col gap-3 md:flex-row md:items-end">
-            <div className="flex-1 space-y-1.5">
+        <CardContent className="space-y-4 p-5">
+          <p className="text-sm font-bold text-zinc-900">Novo cupom</p>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="space-y-1.5">
               <Label className="text-xs text-zinc-500">Código</Label>
               <Input
                 value={codigo}
@@ -95,7 +152,7 @@ export const CuponsPage: React.FC = () => {
                 className="h-10 rounded-xl uppercase"
               />
             </div>
-            <div className="space-y-1.5 md:w-44">
+            <div className="space-y-1.5">
               <Label className="text-xs text-zinc-500">Tipo</Label>
               <select
                 className="flex h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
@@ -106,7 +163,7 @@ export const CuponsPage: React.FC = () => {
                 <option value="valor_fixo">Valor fixo (R$)</option>
               </select>
             </div>
-            <div className="space-y-1.5 md:w-28">
+            <div className="space-y-1.5">
               <Label className="text-xs text-zinc-500">Valor</Label>
               <Input
                 value={valor}
@@ -114,6 +171,70 @@ export const CuponsPage: React.FC = () => {
                 className="h-10 rounded-xl"
               />
             </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-zinc-500">Limite de utilizações</Label>
+              <Input
+                type="number"
+                min={1}
+                value={usoMaximo}
+                onChange={(e) => setUsoMaximo(e.target.value)}
+                placeholder="Ilimitado"
+                className="h-10 rounded-xl"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-zinc-500">Início da validade</Label>
+              <Input
+                type="date"
+                value={validoDe}
+                onChange={(e) => setValidoDe(e.target.value)}
+                className="h-10 rounded-xl"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-zinc-500">Término da validade</Label>
+              <Input
+                type="date"
+                value={validoAte}
+                onChange={(e) => setValidoAte(e.target.value)}
+                className="h-10 rounded-xl"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div>
+              <Label className="text-xs text-zinc-500">Espetáculos permitidos</Label>
+              <p className="text-[11px] text-zinc-400">
+                Sem seleção = válido para todos os espetáculos.
+              </p>
+            </div>
+            {espetaculos.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-zinc-200 px-3 py-3 text-xs text-zinc-500">
+                Nenhum espetáculo cadastrado.
+              </p>
+            ) : (
+              <div className="max-h-44 space-y-2 overflow-y-auto rounded-xl border border-zinc-200 p-3">
+                {espetaculos.map((esp) => {
+                  const checked = idsEspetaculos.includes(esp.id)
+                  return (
+                    <label key={esp.id} className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(value) => toggleEspetaculo(esp.id, value === true)}
+                      />
+                      <span className="truncate">{esp.titulo}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end">
             <Button
               onClick={handleCriar}
               disabled={criando}
@@ -159,9 +280,10 @@ export const CuponsPage: React.FC = () => {
                     {c.tipo === 'percentual' ? `${c.valor}% de desconto` : `R$ ${Number(c.valor).toFixed(2)} de desconto`}
                     {' · '}
                     {c.usos} uso{c.usos === 1 ? '' : 's'}
-                    {c.uso_maximo != null ? ` de ${c.uso_maximo}` : ''}
-                    {c.espetaculo ? ` · ${c.espetaculo.titulo}` : ' · Todos os espetáculos'}
+                    {c.uso_maximo != null ? ` de ${c.uso_maximo}` : ' (ilimitado)'}
                   </p>
+                  <p className="mt-0.5 text-xs text-zinc-500">{formatarValidade(c)}</p>
+                  <p className="mt-0.5 text-xs text-zinc-500">{formatarEspetaculos(c)}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button

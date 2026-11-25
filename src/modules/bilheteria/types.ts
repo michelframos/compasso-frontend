@@ -59,7 +59,7 @@ export interface IngressoPublico {
 
 export interface CupomIngresso {
   id: number
-  id_espetaculo?: number | null
+  ids_espetaculos?: number[]
   codigo: string
   tipo: 'percentual' | 'valor_fixo'
   valor: number
@@ -68,7 +68,7 @@ export interface CupomIngresso {
   valido_ate?: string | null
   uso_maximo?: number | null
   usos: number
-  espetaculo?: { id: number; titulo: string } | null
+  espetaculos?: { id: number; titulo: string }[]
 }
 
 export interface TemplateIngresso {
