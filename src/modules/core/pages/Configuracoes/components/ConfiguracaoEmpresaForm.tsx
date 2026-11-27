@@ -15,7 +15,7 @@ import { useConfiguracaoEmpresa } from '../hooks/useConfiguracaoEmpresa';
 import type { ConfiguracaoEmpresaFormData } from '@/modules/core';
 import { listCidades, listEstados, type Cidade, type EnderecoCep, type Estado } from '@/modules/core/api/localidades';
 import { useBuscaCep } from '@/modules/core/hooks/useBuscaCep';
-import { formatCep, formatCnpj, unmaskCnpj } from '@/shared/lib/utils';
+import { formatCep, formatCnpj, formatWhatsapp, unmaskCnpj, unmaskWhatsapp } from '@/shared/lib/utils';
 
 export const ConfiguracaoEmpresaForm: React.FC = () => {
     const { config, isLoading, isSaving, salvarConfig } = useConfiguracaoEmpresa();
@@ -38,6 +38,8 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
             nome_fantasia: '',
             razao_social: '',
             cnpj: '',
+            email_contato: '',
+            whatsapp: '',
             rua: '',
             numero: '',
             bairro: '',
@@ -109,6 +111,8 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
                 nome_fantasia: config.nome_fantasia,
                 razao_social: config.razao_social || '',
                 cnpj: formatCnpj(config.cnpj || ''),
+                email_contato: config.email_contato || '',
+                whatsapp: formatWhatsapp(config.whatsapp || ''),
                 rua: config.rua || '',
                 numero: config.numero || '',
                 bairro: config.bairro || '',
@@ -131,6 +135,7 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
         }
         salvarConfig({
             ...data,
+            whatsapp: unmaskWhatsapp(data.whatsapp || ''),
             limite_reposicoes_periodo: numero(data.limite_reposicoes_periodo),
             prazo_reposicao_dias: numero(data.prazo_reposicao_dias),
             frequencia_minima: Number(data.frequencia_minima ?? 75),
@@ -176,13 +181,18 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="razao_social" className="text-zinc-700 font-medium ml-1">Razão Social</Label>
+                            <Label htmlFor="razao_social" className="text-zinc-700 font-medium ml-1">
+                                Razão Social
+                            </Label>
                             <Input
                                 id="razao_social"
                                 placeholder="Ex: João da Silva ME"
                                 className="h-11 rounded-xl border-zinc-200 focus-visible:ring-indigo-600"
                                 {...register('razao_social')}
                             />
+                            <p className="text-[11px] text-zinc-400 ml-1">
+                                Recomendada para pagamentos online; se vazia, usa o nome fantasia.
+                            </p>
                         </div>
 
                         <div className="space-y-2">
@@ -204,6 +214,55 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
                             </p>
                             {errors.cnpj && <p className="text-[11px] text-rose-500 ml-1">{errors.cnpj.message}</p>}
                         </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="email_contato" className={`font-medium ml-1 ${errors.email_contato ? 'text-rose-500' : 'text-zinc-700'}`}>
+                                E-mail de contato *
+                            </Label>
+                            <Input
+                                id="email_contato"
+                                type="email"
+                                placeholder="financeiro@suaescola.com"
+                                className={`h-11 rounded-xl focus-visible:ring-indigo-600 ${errors.email_contato ? 'border-rose-500' : 'border-zinc-200'}`}
+                                {...register('email_contato', {
+                                    required: 'E-mail de contato é obrigatório',
+                                    pattern: {
+                                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                                        message: 'E-mail inválido',
+                                    },
+                                })}
+                            />
+                            <p className="text-[11px] text-zinc-400 ml-1">
+                                Usado nos pagamentos online (Asaas). Pode ser o e-mail financeiro da escola.
+                            </p>
+                            {errors.email_contato && (
+                                <p className="text-[11px] text-rose-500 ml-1">{errors.email_contato.message}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="whatsapp" className={`font-medium ml-1 ${errors.whatsapp ? 'text-rose-500' : 'text-zinc-700'}`}>
+                                WhatsApp *
+                            </Label>
+                            <Input
+                                id="whatsapp"
+                                placeholder="(11) 99999-9999"
+                                inputMode="tel"
+                                className={`h-11 rounded-xl focus-visible:ring-indigo-600 ${errors.whatsapp ? 'border-rose-500' : 'border-zinc-200'}`}
+                                {...register('whatsapp', {
+                                    required: 'WhatsApp é obrigatório',
+                                    validate: (value) => {
+                                        const digits = unmaskWhatsapp(value ?? '')
+                                        return (digits.length >= 10 && digits.length <= 11) || 'Informe um celular com DDD'
+                                    },
+                                    onChange: (e) => setValue('whatsapp', formatWhatsapp(e.target.value), { shouldValidate: true }),
+                                })}
+                            />
+                            <p className="text-[11px] text-zinc-400 ml-1">
+                                Celular com DDD enviado ao Asaas na ativação dos pagamentos online.
+                            </p>
+                            {errors.whatsapp && <p className="text-[11px] text-rose-500 ml-1">{errors.whatsapp.message}</p>}
+                        </div>
                     </div>
                 </div>
 
@@ -215,14 +274,16 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
                         </div>
                         <div>
                             <h2 className="text-sm font-bold text-zinc-900">Endereço</h2>
-                            <p className="text-xs text-zinc-500 mt-0.5">Localização física da unidade</p>
+                            <p className="text-xs text-zinc-500 mt-0.5">
+                                Obrigatório para ativar pagamentos online (subconta)
+                            </p>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="cep" className="text-zinc-700 font-medium ml-1 flex items-center gap-2">
-                                CEP
+                            <Label htmlFor="cep" className={`font-medium ml-1 flex items-center gap-2 ${errors.cep ? 'text-rose-500' : 'text-zinc-700'}`}>
+                                CEP *
                                 {isBuscandoCep && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
                             </Label>
                             <Input
@@ -230,46 +291,59 @@ export const ConfiguracaoEmpresaForm: React.FC = () => {
                                 placeholder="00000-000"
                                 inputMode="numeric"
                                 maxLength={9}
-                                className="h-11 rounded-xl border-zinc-200 focus-visible:ring-indigo-600"
+                                className={`h-11 rounded-xl focus-visible:ring-indigo-600 ${errors.cep ? 'border-rose-500' : 'border-zinc-200'}`}
                                 {...register('cep', {
+                                    required: 'CEP é obrigatório',
+                                    validate: (value) =>
+                                        (value ?? '').replace(/\D/g, '').length === 8 || 'CEP deve ter 8 dígitos',
                                     onChange: (e) => {
                                         const cep = formatCep(e.target.value);
-                                        setValue('cep', cep);
+                                        setValue('cep', cep, { shouldValidate: true });
                                         buscarCep(cep);
                                     },
                                     onBlur: (e) => buscarCep(e.target.value),
                                 })}
                             />
+                            {errors.cep && <p className="text-[11px] text-rose-500 ml-1">{errors.cep.message}</p>}
                         </div>
 
                         <div className="md:col-span-2 space-y-2">
-                            <Label htmlFor="rua" className="text-zinc-700 font-medium ml-1">Rua / Logradouro</Label>
+                            <Label htmlFor="rua" className={`font-medium ml-1 ${errors.rua ? 'text-rose-500' : 'text-zinc-700'}`}>
+                                Rua / Logradouro *
+                            </Label>
                             <Input
                                 id="rua"
                                 placeholder="Ex: Av. Sete de Setembro"
-                                className="h-11 rounded-xl border-zinc-200 focus-visible:ring-indigo-600"
-                                {...register('rua')}
+                                className={`h-11 rounded-xl focus-visible:ring-indigo-600 ${errors.rua ? 'border-rose-500' : 'border-zinc-200'}`}
+                                {...register('rua', { required: 'Rua é obrigatória' })}
                             />
+                            {errors.rua && <p className="text-[11px] text-rose-500 ml-1">{errors.rua.message}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="numero" className="text-zinc-700 font-medium ml-1">Número</Label>
+                            <Label htmlFor="numero" className={`font-medium ml-1 ${errors.numero ? 'text-rose-500' : 'text-zinc-700'}`}>
+                                Número *
+                            </Label>
                             <Input
                                 id="numero"
                                 placeholder="Ex: 123"
-                                className="h-11 rounded-xl border-zinc-200 focus-visible:ring-indigo-600"
-                                {...register('numero')}
+                                className={`h-11 rounded-xl focus-visible:ring-indigo-600 ${errors.numero ? 'border-rose-500' : 'border-zinc-200'}`}
+                                {...register('numero', { required: 'Número é obrigatório' })}
                             />
+                            {errors.numero && <p className="text-[11px] text-rose-500 ml-1">{errors.numero.message}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="bairro" className="text-zinc-700 font-medium ml-1">Bairro</Label>
+                            <Label htmlFor="bairro" className={`font-medium ml-1 ${errors.bairro ? 'text-rose-500' : 'text-zinc-700'}`}>
+                                Bairro *
+                            </Label>
                             <Input
                                 id="bairro"
                                 placeholder="Ex: Centro"
-                                className="h-11 rounded-xl border-zinc-200 focus-visible:ring-indigo-600"
-                                {...register('bairro')}
+                                className={`h-11 rounded-xl focus-visible:ring-indigo-600 ${errors.bairro ? 'border-rose-500' : 'border-zinc-200'}`}
+                                {...register('bairro', { required: 'Bairro é obrigatório' })}
                             />
+                            {errors.bairro && <p className="text-[11px] text-rose-500 ml-1">{errors.bairro.message}</p>}
                         </div>
 
                         <div className="space-y-2">

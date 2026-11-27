@@ -4,10 +4,12 @@ import {
   Building2,
   ChevronLeft,
   Edit,
+  Loader2,
   LogIn,
   Mail,
   Search,
   User,
+  Wallet,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -16,7 +18,7 @@ import { Input } from '@/shared/components/ui/input'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Badge } from '@/shared/components/ui/badge'
 import { PaginationCustom } from '@/shared/components/ui/pagination-custom'
-import { getInstituicao } from '../../api/instituicoes'
+import { getInstituicao, provisionarSubcontaInstituicao } from '../../api/instituicoes'
 import { useImpersonation } from '../../hooks/useImpersonation'
 import { useInstituicaoUsuarios } from './hooks/useInstituicaoUsuarios'
 import type { PlatformInstituicao } from '../../types'
@@ -59,6 +61,7 @@ export function InstituicaoDetailPage() {
 
   const { enterAsUser, isStarting, isImpersonating } = useImpersonation()
   const [enteringUserId, setEnteringUserId] = useState<number | null>(null)
+  const [isProvisioningSubconta, setIsProvisioningSubconta] = useState(false)
 
   useEffect(() => {
     if (!instituicaoId) return
@@ -86,6 +89,33 @@ export function InstituicaoDetailPage() {
       await enterAsUser(instituicaoId, userId)
     } finally {
       setEnteringUserId(null)
+    }
+  }
+
+  const handleProvisionarSubconta = async () => {
+    if (!instituicaoId) return
+    setIsProvisioningSubconta(true)
+    try {
+      const subconta = await provisionarSubcontaInstituicao(instituicaoId)
+      setInstituicao((prev) =>
+        prev
+          ? {
+              ...prev,
+              gateway_subaccount_status: subconta.status,
+              gateway_subaccount_last_error: subconta.last_error ?? null,
+              subconta_ativa: subconta.ativa,
+            }
+          : prev,
+      )
+      toast.success(
+        subconta.ativa
+          ? 'Subconta ativa.'
+          : `Subconta solicitada (status: ${subconta.status}).`,
+      )
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, 'Erro ao criar/retentar subconta'))
+    } finally {
+      setIsProvisioningSubconta(false)
     }
   }
 
@@ -161,6 +191,33 @@ export function InstituicaoDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <Wallet className="w-5 h-5 text-indigo-600 mt-0.5" />
+            <div>
+              <p className="text-xs font-bold text-zinc-400 uppercase">Subconta de recebimentos</p>
+              <p className="text-sm font-semibold text-zinc-900 mt-1 capitalize">
+                {instituicao.gateway_subaccount_status ?? 'none'}
+                {instituicao.subconta_ativa ? ' (ativa)' : ''}
+              </p>
+              {instituicao.gateway_subaccount_last_error && (
+                <p className="text-xs text-rose-600 mt-1">{instituicao.gateway_subaccount_last_error}</p>
+              )}
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="rounded-full"
+            disabled={isProvisioningSubconta}
+            onClick={() => void handleProvisionarSubconta()}
+          >
+            {isProvisioningSubconta ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            Criar/retentar subconta
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card className="border-none shadow-sm">
         <CardContent className="p-0">

@@ -60,6 +60,11 @@ export interface PlatformInstituicao {
   trial_usa_padrao: boolean
   assinatura_inicia_em: string | null
   assinatura_status: AssinaturaStatus
+  gateway_subaccount_uuid?: string | null
+  gateway_subaccount_status?: string
+  gateway_subaccount_last_error?: string | null
+  subconta_ativa?: boolean
+  meios_cobranca_online?: string[]
   em_trial: boolean
   trial_expirado: boolean
   acesso_bloqueado: boolean

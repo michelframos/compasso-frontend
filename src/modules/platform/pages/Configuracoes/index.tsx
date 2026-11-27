@@ -1,16 +1,26 @@
 import { useCallback, useRef, useState } from 'react'
 import type { Editor } from '@tiptap/react'
-import { Clock, Loader2, Mail } from 'lucide-react'
+import { Clock, CreditCard, Loader2, Mail } from 'lucide-react'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { Button } from '@/shared/components/ui/button'
 import { RichTextEditor } from '@/shared/components/ui/rich-text-editor'
 import { useConfiguracoesPlataforma } from './hooks/useConfiguracoesPlataforma'
 
-type Aba = 'gratuidade' | 'email'
+type Aba = 'gratuidade' | 'email' | 'pagamentos'
 
 export function PlatformConfiguracoesPage() {
-  const { form, isLoading, isSubmitting, onSubmit, variaveis } = useConfiguracoesPlataforma()
+  const {
+    form,
+    isLoading,
+    isSubmitting,
+    isTesting,
+    onSubmit,
+    onTestBilling,
+    variaveis,
+    billingConfigured,
+    keyMasked,
+  } = useConfiguracoesPlataforma()
   const { register, watch, setValue, formState: { errors } } = form
   const [aba, setAba] = useState<Aba>('gratuidade')
   const editorRef = useRef<Editor | null>(null)
@@ -51,7 +61,7 @@ export function PlatformConfiguracoesPage() {
           <span className="text-indigo-600">Configurações</span> da Plataforma
         </h1>
         <p className="text-zinc-500 text-sm">
-          Período de gratuidade padrão e e-mail enviado às escolas recém-cadastradas.
+          Gratuidade, e-mail de cadastro e integração com o centralizador de pagamentos.
         </p>
       </div>
 
@@ -64,6 +74,10 @@ export function PlatformConfiguracoesPage() {
           <button type="button" onClick={() => setAba('email')} className={tabClass(aba === 'email')}>
             <Mail className="w-4 h-4" />
             E-mail de cadastro
+          </button>
+          <button type="button" onClick={() => setAba('pagamentos')} className={tabClass(aba === 'pagamentos')}>
+            <CreditCard className="w-4 h-4" />
+            Pagamentos
           </button>
         </div>
 
@@ -80,7 +94,7 @@ export function PlatformConfiguracoesPage() {
                 &quot;usar padrão&quot;. Escolas existentes não são alteradas.
               </p>
             </div>
-          ) : (
+          ) : aba === 'email' ? (
             <div className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email_cadastro_assunto">Assunto *</Label>
@@ -124,6 +138,64 @@ export function PlatformConfiguracoesPage() {
                   <p className="text-xs text-rose-500">{errors.email_cadastro_corpo.message}</p>
                 )}
               </div>
+            </div>
+          ) : (
+            <div className="max-w-xl space-y-5">
+              <div className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+                Status:{' '}
+                <strong className={billingConfigured ? 'text-emerald-700' : 'text-amber-700'}>
+                  {billingConfigured ? 'Configurado' : 'Incompleto'}
+                </strong>
+                {keyMasked ? ` · Key: ${keyMasked}` : ''}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="billing_gateway_url">URL do centralizador</Label>
+                <Input
+                  id="billing_gateway_url"
+                  placeholder="http://127.0.0.1:8001"
+                  {...register('billing_gateway_url')}
+                />
+                {errors.billing_gateway_url && (
+                  <p className="text-xs text-rose-500">{errors.billing_gateway_url.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="billing_gateway_api_key">API Key (`cpk_...`)</Label>
+                <Input
+                  id="billing_gateway_api_key"
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder={keyMasked || 'Cole a API Key do System Compasso'}
+                  {...register('billing_gateway_api_key')}
+                />
+                <p className="text-xs text-zinc-500">
+                  Deixe o valor mascarado para manter a key atual. Informe uma nova key completa apenas para
+                  substituir.
+                </p>
+              </div>
+
+              <label className="flex items-center gap-3 rounded-xl border border-zinc-200 px-4 py-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={watch('billing_enabled')}
+                  onChange={(e) => setValue('billing_enabled', e.target.checked, { shouldDirty: true })}
+                  className="h-4 w-4 rounded border-zinc-300 text-indigo-600"
+                />
+                <span className="text-sm font-medium text-zinc-800">Billing online ativo</span>
+              </label>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void onTestBilling()}
+                disabled={isTesting}
+                className="rounded-full"
+              >
+                {isTesting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Testar conexão
+              </Button>
             </div>
           )}
         </div>

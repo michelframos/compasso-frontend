@@ -37,12 +37,21 @@ export interface PlatformConfiguracoes {
   default_trial_days: number
   email_cadastro_assunto: string
   email_cadastro_corpo: string
+  billing_gateway_url: string | null
+  billing_enabled: boolean
+  billing_gateway_api_key_masked: string | null
+  billing_configured: boolean
   variaveis_email: Array<{ chave: string; descricao: string }>
 }
 
-export type PlatformConfiguracoesPayload = Partial<
-  Pick<PlatformConfiguracoes, 'default_trial_days' | 'email_cadastro_assunto' | 'email_cadastro_corpo'>
->
+export type PlatformConfiguracoesPayload = Partial<{
+  default_trial_days: number
+  email_cadastro_assunto: string
+  email_cadastro_corpo: string
+  billing_gateway_url: string | null
+  billing_enabled: boolean
+  billing_gateway_api_key: string | null
+}>
 
 export async function getConfiguracoes() {
   const { data } = await api.get<PlatformConfiguracoes>('/platform/configuracoes')
@@ -51,6 +60,17 @@ export async function getConfiguracoes() {
 
 export async function updateConfiguracoes(payload: PlatformConfiguracoesPayload) {
   const { data } = await api.put<PlatformConfiguracoes>('/platform/configuracoes', payload)
+  return data
+}
+
+export async function testarBilling(payload?: {
+  billing_gateway_url?: string | null
+  billing_gateway_api_key?: string | null
+}) {
+  const { data } = await api.post<{ ok: boolean; message: string; system?: string | null }>(
+    '/platform/configuracoes/billing/testar',
+    payload ?? {},
+  )
   return data
 }
 

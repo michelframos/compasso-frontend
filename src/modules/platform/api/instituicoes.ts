@@ -27,6 +27,18 @@ export async function getInstituicao(id: number) {
   return data.data
 }
 
+export async function provisionarSubcontaInstituicao(id: number) {
+  const { data } = await api.post<{
+    data: {
+      status: string
+      ativa: boolean
+      last_error?: string | null
+      meios_cobranca_online?: string[]
+    }
+  }>(`/platform/instituicoes/${id}/subconta`)
+  return data.data
+}
+
 export type InstituicaoCreatePayload = InstituicaoPayload & {
   admin_nome: string
   admin_email: string

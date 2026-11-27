@@ -1,5 +1,5 @@
 import api from '@/shared/lib/axios'
-import type { ContaDoAluno, PixDaConta } from '../types'
+import type { ContaCobrancaGateway, ContaDoAluno, MetodoCobrancaOnline, PixDaConta } from '../types'
 
 export async function listarContasConsolidadas(situacao: string) {
   const { data } = await api.get<{ data: ContaDoAluno[] }>('/aluno/me/contas/consolidado', {
@@ -22,6 +22,32 @@ export async function getPix(idConta: number, idAluno?: number | null) {
   const { data } = await api.get<{ data: PixDaConta }>(`/aluno/me/contas/${idConta}/pix`, {
     params: idAluno ? { id_aluno: idAluno } : undefined,
   })
+  return data.data
+}
+
+export async function criarCobrancaOnline(
+  idConta: number,
+  method: MetodoCobrancaOnline,
+  idAluno?: number | null,
+) {
+  const { data } = await api.post<{ data: ContaCobrancaGateway }>(
+    `/aluno/me/contas/${idConta}/cobranca-online`,
+    { method },
+    { params: idAluno ? { id_aluno: idAluno } : undefined },
+  )
+  return data.data
+}
+
+export async function getCobrancaOnline(idConta: number, sync = false, idAluno?: number | null) {
+  const { data } = await api.get<{ data: ContaCobrancaGateway | null }>(
+    `/aluno/me/contas/${idConta}/cobranca-online`,
+    {
+      params: {
+        ...(sync ? { sync: 1 } : {}),
+        ...(idAluno ? { id_aluno: idAluno } : {}),
+      },
+    },
+  )
   return data.data
 }
 

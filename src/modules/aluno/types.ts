@@ -317,6 +317,33 @@ export interface Dependente {
   parentesco: string | null
 }
 
+export type MetodoCobrancaOnline = 'pix' | 'credit_card' | 'boleto'
+
+export type StatusCobrancaOnline =
+  | 'pending'
+  | 'awaiting_payment'
+  | 'paid'
+  | 'overdue'
+  | 'canceled'
+  | 'failed'
+
+export interface ContaCobrancaGateway {
+  id: number
+  id_conta: number
+  status: StatusCobrancaOnline
+  method: MetodoCobrancaOnline
+  amount: number
+  aberta: boolean
+  paga: boolean
+  invoice_url: string | null
+  pix_copy_paste: string | null
+  pix_qr_code: string | null
+  last_error: string | null
+  id_conta_pagamento: number | null
+  created_at?: string | null
+  updated_at?: string | null
+}
+
 export interface ContaDoAluno {
   id: number
   id_matricula: number | null
@@ -328,6 +355,11 @@ export interface ContaDoAluno {
   situacao: 'atrasada' | 'vence_hoje' | 'a_vencer' | 'paga'
   aluno?: { id: number; nome: string | null }
   pagamentos: PagamentoDoAluno[]
+  cobranca_online?: {
+    disponivel: boolean
+    meios: MetodoCobrancaOnline[]
+    cobranca_aberta: ContaCobrancaGateway | null
+  }
 }
 
 export interface PixDaConta {

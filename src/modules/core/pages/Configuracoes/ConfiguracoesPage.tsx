@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { QrCode, Building2, Users, MessageCircle, Blocks, CalendarCog, Wallet } from 'lucide-react';
+import { QrCode, Building2, Users, MessageCircle, Blocks, CalendarCog, Wallet, CreditCard } from 'lucide-react';
 import { ConfiguracaoPixForm } from './components/ConfiguracaoPixForm';
 import { ConfiguracaoEmpresaForm } from './components/ConfiguracaoEmpresaForm';
 import { ConfiguracaoMensalidadesForm } from './components/ConfiguracaoMensalidadesForm';
+import { ConfiguracaoCobrancaOnlineForm } from './components/ConfiguracaoCobrancaOnlineForm';
 import { ModulosEscolaTab } from './components/ModulosEscolaTab';
 import { PermissoesProfessorTab } from './components/PermissoesProfessorTab';
 import { UsuariosList } from './components/UsuariosList';
@@ -10,13 +11,15 @@ import { ConfiguracaoWhatsappTab } from '@/modules/notificacoes'
 import { useHasModulo } from '@/shared/hooks/useHasModulo'
 import { useAuthStore } from '@/shared/store/useAuthStore'
 
+type ConfigTab = 'pix' | 'mensalidades' | 'cobrancas' | 'empresa' | 'usuarios' | 'whatsapp' | 'modulos' | 'professores'
+
 export const ConfiguracoesPage: React.FC = () => {
     const hasFinanceiro = useHasModulo('financeiro');
     const isAdmin = useAuthStore((s) => s.user?.role === 'admin');
-    const [activeTab, setActiveTab] = useState<'pix' | 'mensalidades' | 'empresa' | 'usuarios' | 'whatsapp' | 'modulos' | 'professores'>('empresa');
+    const [activeTab, setActiveTab] = useState<ConfigTab>('empresa');
 
     useEffect(() => {
-        if ((activeTab === 'pix' || activeTab === 'mensalidades') && !hasFinanceiro) {
+        if ((activeTab === 'pix' || activeTab === 'mensalidades' || activeTab === 'cobrancas') && !hasFinanceiro) {
             setActiveTab('whatsapp');
         }
     }, [activeTab, hasFinanceiro]);
@@ -74,6 +77,19 @@ export const ConfiguracoesPage: React.FC = () => {
                         >
                             <Wallet className="w-4 h-4" />
                             Mensalidades
+                        </button>
+                        )}
+                        {hasFinanceiro && isAdmin && (
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('cobrancas')}
+                            className={`px-4 py-2 text-sm font-bold border-b-2 transition-all flex items-center gap-2 hover:cursor-pointer ${activeTab === 'cobrancas'
+                                ? 'border-indigo-600 text-indigo-600'
+                                : 'border-transparent text-zinc-400 hover:text-zinc-600'
+                                }`}
+                        >
+                            <CreditCard className="w-4 h-4" />
+                            Cobranças online
                         </button>
                         )}
                         <button
@@ -134,6 +150,8 @@ export const ConfiguracoesPage: React.FC = () => {
                         <ConfiguracaoPixForm />
                     ) : activeTab === 'mensalidades' && hasFinanceiro ? (
                         <ConfiguracaoMensalidadesForm />
+                    ) : activeTab === 'cobrancas' && hasFinanceiro && isAdmin ? (
+                        <ConfiguracaoCobrancaOnlineForm />
                     ) : activeTab === 'whatsapp' ? (
                         <ConfiguracaoWhatsappTab />
                     ) : activeTab === 'modulos' && isAdmin ? (

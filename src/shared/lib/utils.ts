@@ -25,6 +25,20 @@ export function unmaskCep(value: string): string {
 }
 
 /** Aplica a máscara 00000-000 progressivamente enquanto o usuário digita. */
+export function formatWhatsapp(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
+  }
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+}
+
+export function unmaskWhatsapp(value: string): string {
+  return value.replace(/\D/g, '')
+}
+
 export function formatCep(value: string): string {
   return unmaskCep(value).replace(/^(\d{5})(\d)/, '$1-$2')
 }

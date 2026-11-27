@@ -1,5 +1,11 @@
 import api from '@/shared/lib/axios'
-import type { Conta, PaginatedResponse, ContaPagamento } from '../pages/Financeiro/types'
+import type {
+  Conta,
+  ContaCobrancaGateway,
+  ContaPagamento,
+  MetodoCobrancaOnline,
+  PaginatedResponse,
+} from '../pages/Financeiro/types'
 
 export type ListContasParams = Record<string, unknown>
 
@@ -44,4 +50,23 @@ export async function createPagamentosLote(payload: Record<string, unknown>) {
 
 export async function deletePagamento(pagamentoId: number | string) {
   await api.delete(`/pagamentos/${pagamentoId}`)
+}
+
+export async function criarCobrancaOnlineConta(contaId: number | string, method: MetodoCobrancaOnline) {
+  const { data } = await api.post<{ data: ContaCobrancaGateway }>(`/contas/${contaId}/cobranca-online`, {
+    method,
+  })
+  return data.data
+}
+
+export async function getCobrancaOnlineConta(contaId: number | string, sync = false) {
+  const { data } = await api.get<{ data: ContaCobrancaGateway | null }>(`/contas/${contaId}/cobranca-online`, {
+    params: sync ? { sync: 1 } : undefined,
+  })
+  return data.data
+}
+
+export async function cancelarCobrancaOnlineConta(contaId: number | string) {
+  const { data } = await api.post<{ data: ContaCobrancaGateway }>(`/contas/${contaId}/cobranca-online/cancelar`)
+  return data.data
 }

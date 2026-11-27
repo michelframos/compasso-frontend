@@ -92,6 +92,10 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    port: 5174, // escolha a porta desejada
+    strictPort: true, // encerra se a porta já estiver em uso
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

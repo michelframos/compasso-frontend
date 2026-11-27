@@ -107,6 +107,8 @@ export interface ConfiguracaoEmpresa {
   nome_fantasia: string
   razao_social: string | null
   cnpj: string | null
+  email_contato: string | null
+  whatsapp: string | null
   rua: string | null
   numero: string | null
   bairro: string | null
@@ -130,6 +132,8 @@ export interface ConfiguracaoEmpresaFormData {
   nome_fantasia: string
   razao_social: string | null
   cnpj: string | null
+  email_contato: string | null
+  whatsapp: string | null
   rua: string | null
   numero: string | null
   bairro: string | null

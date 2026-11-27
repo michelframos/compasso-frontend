@@ -14,6 +14,8 @@ import { useContas } from '../hooks/useContas';
 
 import type { Conta } from '../types';
 
+import { ContaCobrancaOnlineSection } from './ContaCobrancaOnlineSection';
+
 
 
 interface ContaDetalhesModalProps {
@@ -427,6 +429,11 @@ export const ContaDetalhesModal: React.FC<ContaDetalhesModalProps> = ({ conta, i
                                 </div>
 
                             )}
+
+                            <ContaCobrancaOnlineSection
+                                conta={conta}
+                                onPaid={onPagamentoDeleted}
+                            />
 
                         </div>
 
